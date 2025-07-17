@@ -56,7 +56,7 @@ ch_meta     = ch_sheet
 // Import Modules:
 
 include {   FASTP                       } from './modules/fastp'
-// include {   MIRDEEP2                    } from './modules/mirdeep2'
+include {   MAPPER                      } from './modules/mirdeep2'
 // include {   FASTQ2FASTA                 } from './modules/fastq2fasta'
 
 
@@ -69,7 +69,7 @@ process writeChannelToFile {
     val lines
 
     output:
-    path "config.txt" 
+    path "config.txt"         , emit:config_file
 
     script:
     """
@@ -102,6 +102,8 @@ workflow {
                     .view()
 
     writeChannelToFile(ch_config)
+
+    MAPPER(writeChannelToFile.out.config_file)
 
      
 }

@@ -1,17 +1,18 @@
-process FASTQ2FASTA {
+process MAPPER {
 
     maxForks 8
     tag "$id"
     label 'process_high'
     
-    publishDir "trimmed_fasta", mode: "symlink", overwrite: true
+    publishDir "mirdeep2", mode: "symlink", overwrite: true
 
 
     input:
-        tuple val(id), path(reads), val(config)
+        val(pin)
+        path(config)
     
     output:
-        tuple val(id), path("*fasta"), val(config)     , emit: trimmed_fasta
+        path(*)     , emit: mapper_outs
              
 
 
@@ -20,7 +21,7 @@ process FASTQ2FASTA {
 
     """
 
-        mapper.pl $CONFIG -d -c -m -s ${id}.collapsed.fa
+        mapper.pl $config -d -c -m -s ${pin}.collapsed.fa
 
 
     """
