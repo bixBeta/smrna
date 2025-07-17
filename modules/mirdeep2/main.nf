@@ -1,5 +1,5 @@
 process MAPPER {
-
+    
     maxForks 8
     tag "$id"
     label 'process_high'
