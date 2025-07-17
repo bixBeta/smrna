@@ -57,7 +57,7 @@ ch_meta     = ch_sheet
 
 include {   FASTP                       } from './modules/fastp'
 // include {   MIRDEEP2                    } from './modules/mirdeep2'
-include {   FASTQ2FASTA                 } from './modules/fastq2fasta'
+// include {   FASTQ2FASTA                 } from './modules/fastq2fasta'
 
 
 
@@ -67,10 +67,10 @@ workflow {
         .set {ch_fastp_out}
         
 
-    FASTQ2FASTA(ch_fastp_out)
-        .set {ch_fasta_config}
+    // FASTQ2FASTA(ch_fastp_out)
+    //     .set {ch_fasta_config}
 
-    ch_fasta_config 
+    ch_fastp_out 
         | collect
         | view    
 }

@@ -12,7 +12,7 @@ process FASTP {
         tuple val(id), path(reads), val(config)
     
     output:
-        tuple val(id), path("*trimmed.fq.gz"), val(config)         , emit: trimmed_fqs
+        tuple val(id), path("*trimmed.fq.gz"), path("*.fasta"), val(config)         , emit: trimmed_fqs
              
         
     script:
@@ -29,6 +29,9 @@ process FASTP {
         -h ${id}.fastp.html \
         -j ${id}.fastp.json
     
+        gunzip ${id}_trimmed.fq.gz
+        fastq2fasta.pl ${id}_trimmed.fq > ${id}.fasta
+
         """
 
     }
@@ -43,6 +46,10 @@ process FASTP {
             -o ${id}_trimmed.fq.gz \
             -h ${id}.fastp.html \
             -j ${id}.fastp.json
+        
+
+        gunzip ${id}_trimmed.fq.gz
+        fastq2fasta.pl ${id}_trimmed.fq > ${id}.fasta
         
         """
 
