@@ -78,7 +78,7 @@ workflow {
 
     ch_config = ch_fastp_out
                     .map{ id, fq, fa, config -> "$fa\t$config"}
-                    .saveText("config.txt")
+                    .setText("config.txt")
 
      
 }
