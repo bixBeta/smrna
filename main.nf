@@ -55,9 +55,9 @@ ch_meta     = ch_sheet
 
 // Import Modules:
 
-include {   FASTP                       } from '.modules/fastp'
+include {   FASTP                       } from './modules/fastp'
 // include {   MIRDEEP2                    } from './modules/mirdeep2'
-include {   FASTQ2FASTA                 } from '.modules/fastq2fasta'
+include {   FASTQ2FASTA                 } from './modules/fastq2fasta'
 
 
 
