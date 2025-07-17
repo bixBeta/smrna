@@ -2,7 +2,7 @@ process FASTQ2FASTA {
 
     maxForks 8
     tag "$id"
-    label 'process_low'
+    label 'process_high'
     
     publishDir "trimmed_fasta", mode: "symlink", overwrite: true
 
@@ -20,9 +20,7 @@ process FASTQ2FASTA {
 
     """
 
-        gunzip ${reads}
-
-        fastq2fasta.pl *trimmed.fq > ${id}.fasta
+        mapper.pl $CONFIG -d -c -m -s ${id}.collapsed.fa
 
 
     """

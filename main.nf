@@ -71,6 +71,13 @@ workflow {
     //     .set {ch_fasta_config}
 
     ch_fastp_out 
-        | flatten
-        | view    
+        | view   
+
+
+    ch_config = ch_fastp_out
+                    .collect()
+                    .map{ id, fq, fa, config -> "$fa\t$config"}
+                    .saveText("config.txt")
+
+     
 }
