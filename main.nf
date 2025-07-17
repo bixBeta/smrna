@@ -96,7 +96,9 @@ workflow {
     ch_config = ch_fastp_out
                     // .collect()
                     .map{id, fq, fa, config -> "$fa\t$config" }
-                    .flatten()
+                    .flatMap { it.split(/,\s*/) }   // split on comma + optional space
+                    .map { it.trim() }
+                    .view()
 
     writeChannelToFile(ch_config)
 
