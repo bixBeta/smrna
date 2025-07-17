@@ -66,7 +66,7 @@ process writeChannelToFile {
     publishDir "trimmed_fastqs", mode: "symlink"        , overwrite: true
 
     input:
-    val line from ch_config
+    val line
 
     output:
     path "config.txt" append true
