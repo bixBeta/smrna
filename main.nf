@@ -65,9 +65,12 @@ workflow {
 
     FASTP(ch_meta)
         .set {ch_fastp_out}
-        .view()
+        
 
     FASTQ2FASTA(ch_fastp_out)
         .set {ch_fasta_config}
-        .view()
+
+    ch_fasta_config 
+        | collect
+        | view    
 }
