@@ -63,7 +63,7 @@ include {   FASTP                       } from './modules/fastp'
 
 process writeChannelToFile {
 
-    publishDir "trimmed_fastqs", mode: "symlink"        , overwrite: true
+    publishDir "trimmed_fastqs", mode: "symlink"        
 
     input:
     val line
