@@ -22,7 +22,7 @@ process FASTQ2FASTA {
 
         gunzip ${reads}
 
-        fastq2fasta.pl ${reads} > ${id}.fasta
+        fastq2fasta.pl *trimmed.fq > ${id}.fasta
 
 
     """
