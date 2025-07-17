@@ -69,7 +69,7 @@ process writeChannelToFile {
     val line
 
     output:
-    path "config.txt" append true
+    path "config.txt"
 
     script:
     """
