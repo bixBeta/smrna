@@ -94,8 +94,9 @@ workflow {
 
 
     ch_config = ch_fastp_out
-                    .map{id, fq, fa, config -> "$fa\t$config" }
                     .collect()
+                    .map{id, fq, fa, config -> "$fa\t$config" }
+                    
 
     writeChannelToFile(ch_config)
 
