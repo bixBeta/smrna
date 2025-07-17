@@ -73,7 +73,7 @@ process writeChannelToFile {
 
     script:
     """
-    echo '$line' >> config.txt
+    echo -e '${lines.join("\\n")}' >> config.txt
     """
 }
 
@@ -98,6 +98,7 @@ workflow {
                     .map{id, fq, fa, config -> "$fa\t$config" }
                     .flatMap { it.split(/,\s*/) }   // split on comma + optional space
                     .map { it.trim() }
+                    .collect()
                     .view()
 
     writeChannelToFile(ch_config)
