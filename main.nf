@@ -71,6 +71,6 @@ workflow {
     //     .set {ch_fasta_config}
 
     ch_fastp_out 
-        | collect
+        | flatten
         | view    
 }
