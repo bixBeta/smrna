@@ -12,7 +12,7 @@ process MAPPER{
         path(config)
     
     output:
-        path(*)     , emit: mapper_outs
+        path("*")     , emit: mapper_outs
              
 
 
