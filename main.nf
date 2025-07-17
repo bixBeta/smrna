@@ -61,6 +61,23 @@ include {   FASTP                       } from './modules/fastp'
 
 
 
+process writeChannelToFile {
+
+    publishDir "trimmed_fastqs", mode: "symlink"        , overwrite: true
+
+    input:
+    val line from ch_fastp_out.map { id, fq, fa, config -> "$fa\t$config" }
+
+    output:
+    path "config.txt" append true
+
+    script:
+    """
+    echo '$line' >> config.txt
+    """
+}
+
+
 workflow {
 
     FASTP(ch_meta)
@@ -76,9 +93,9 @@ workflow {
         | view
 
 
-    ch_config = ch_fastp_out
-                    .map{ id, fq, fa, config -> "$fa\t$config"}
-                    .setText("config.txt")
+    // ch_config = ch_fastp_out
+    //                 .map{ }
+    //                 .setText("config.txt")
 
      
 }
