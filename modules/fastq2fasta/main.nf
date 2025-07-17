@@ -20,9 +20,9 @@ process FASTQ2FASTA {
 
     """
 
-        gunzip ${reads[0]}
+        gunzip ${reads}
 
-        fastq2fasta.pl ${reads[0]} > ${id}.fasta
+        fastq2fasta.pl ${reads} > ${id}.fasta
 
 
     """
