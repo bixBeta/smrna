@@ -72,6 +72,8 @@ workflow {
 
     ch_fastp_out 
         | view   
+        | collect
+        | view
 
 
     ch_config = ch_fastp_out
