@@ -66,7 +66,7 @@ process writeChannelToFile {
     publishDir "trimmed_fastqs", mode: "symlink"        , overwrite: true
 
     input:
-    val line from ch_fastp_out.map { id, fq, fa, config -> "$fa\t$config" }
+    val line from ch_config
 
     output:
     path "config.txt" append true
