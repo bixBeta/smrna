@@ -2,7 +2,7 @@ process MAPPER{
 
     maxForks 1
     tag "$id"
-    label 'process_high'
+    label 'process_mirdeep2'
     
     publishDir "mirdeep2", mode: "symlink", overwrite: true
 
