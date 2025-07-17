@@ -88,9 +88,9 @@ workflow {
     //     .set {ch_fasta_config}
 
     ch_fastp_out 
-        | view   
+        // | view   
         | flatten
-        | view
+        // | view
 
 
     ch_config = ch_fastp_out
