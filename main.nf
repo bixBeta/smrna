@@ -103,7 +103,7 @@ workflow {
 
     writeChannelToFile(ch_config)
 
-    MAPPER(writeChannelToFile.out.config_file)
+    MAPPER(ch_pin, writeChannelToFile.out.config_file)
 
      
 }
