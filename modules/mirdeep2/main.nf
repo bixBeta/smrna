@@ -1,4 +1,4 @@
-process MAPPER {
+process MAPPER{
 
     maxForks 1
     tag "$id"
