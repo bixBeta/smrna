@@ -31,6 +31,7 @@ process FASTP {
     
         gunzip ${id}_trimmed.fq.gz
         fastq2fasta.pl ${id}_trimmed.fq > ${id}.fasta
+        gzip ${id}_trimmed.fq
 
         """
 
@@ -50,6 +51,7 @@ process FASTP {
 
         gunzip ${id}_trimmed.fq.gz
         fastq2fasta.pl ${id}_trimmed.fq > ${id}.fasta
+        ${id}_trimmed.fq
         
         """
 
