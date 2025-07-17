@@ -89,12 +89,12 @@ workflow {
 
     ch_fastp_out 
         | view   
-        | collect
+        | flatten
         | view
 
 
     ch_config = ch_fastp_out
-                    .collect()
+                    // .collect()
                     .map{id, fq, fa, config -> "$fa\t$config" }
                     
 
