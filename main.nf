@@ -49,7 +49,7 @@ ch_genome   = channel.value(params.genome)
 ch_sheet    = channel.fromPath(params.sheet)
 ch_meta     = ch_sheet
                 | splitCsv( header:true )
-                | map { row -> [row.label, [file(row.fastq1), row.config]]}
+                | map { row -> [row.label, file(row.fastq1), row.config]}
                 | view
 
 
@@ -57,7 +57,7 @@ ch_meta     = ch_sheet
 
 include {   FASTP                       } from '.modules/fastp'
 // include {   MIRDEEP2                    } from './modules/mirdeep2'
-// include {   FASTQ2FASTA                 } from '.modules/fastq2fasta'
+include {   FASTQ2FASTA                 } from '.modules/fastq2fasta'
 
 
 

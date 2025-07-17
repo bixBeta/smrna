@@ -8,10 +8,10 @@ process FASTQ2FASTA {
 
 
     input:
-        tuple val(id), path(reads)
+        tuple val(id), path(reads), val(config)
     
     output:
-        tuple val(id), path("*fasta")       , emit: trimmed_fasta
+        tuple val(id), path("*fasta"), val(config)     , emit: trimmed_fasta
              
 
 

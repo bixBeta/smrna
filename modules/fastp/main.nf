@@ -5,14 +5,14 @@ process FASTPM {
     tag "$id"
     label 'process_high'
     
-    publishDir "trimmed_fastqs", mode: "symlink", overwrite: true
+    publishDir "trimmed_fastqs", mode: "symlink"        , overwrite: true
 
 
     input:
-        tuple val(id), path(reads)
+        tuple val(id), path(reads), val(config)
     
     output:
-        tuple val(id), path("*gz")       , emit: trimmed_fqs
+        tuple val(id), path("*trimmed.fq.gz"), val(config)         , emit: trimmed_fqs
              
         
     script:
@@ -24,8 +24,8 @@ process FASTPM {
         -z 4 -w 16 \
         --length_required 10 --qualified_quality_phred 20 \
         --trim_poly_g \
-        -i ${reads[0]} \
-        -o ${id}_val_1.fq.gz \
+        -i ${reads} \
+        -o ${id}_trimmed.fq.gz \
         -h ${id}.fastp.html \
         -j ${id}.fastp.json
     
@@ -39,8 +39,8 @@ process FASTPM {
             fastp \
             -z 4 -w 16 \
             --length_required 10 --qualified_quality_phred 20 \
-            -i ${reads[0]} \
-            -o ${id}_val_1.fq.gz \
+            -i ${reads} \
+            -o ${id}_trimmed.fq.gz \
             -h ${id}.fastp.html \
             -j ${id}.fastp.json
         
