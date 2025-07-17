@@ -90,12 +90,13 @@ workflow {
     ch_fastp_out 
         | view   
         | collect
-        // | view
+        | view
 
 
     ch_config = ch_fastp_out
                     .map{id, fq, fa, config -> "$fa\t$config" }
-    
+                    .collect()
+
     writeChannelToFile(ch_config)
 
      
