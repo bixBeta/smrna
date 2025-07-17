@@ -89,7 +89,7 @@ workflow {
 
     ch_fastp_out 
         | view   
-        // | collect
+        | collect
         // | view
 
 
