@@ -9,7 +9,7 @@ params.sheet                    = "sample-sheet.csv"
 params.id                       = "TREX_ID"
 params.genome                   = null
 params.instrument               = "nova"
-
+params.genome                   = null
 
 if( params.help ) {
 
@@ -33,6 +33,7 @@ Args:
         . etc.
         -------------------------------------------
     * --fastp           : Invokes fastp trimming module.
+    * --genome          : Invokes Quant + specifies reference genome; available options < hsa, mmu, cel > 
     * --instrument      : Use 'nova' for 2 channel chemistry, else use 'hiseq'  
 
 
@@ -52,12 +53,13 @@ ch_meta     = ch_sheet
                 | map { row -> [row.label, file(row.fastq1), row.config]}
                 | view
 
+ch_genome   = channel.value(params.genome)
 
 // Import Modules:
 
-include {   FASTP                       } from './modules/fastp'
-include {   MAPPER                      } from './modules/mirdeep2'
-// include {   FASTQ2FASTA                 } from './modules/fastq2fasta'
+include { FASTP              } from './modules/fastp'
+include { MAPPER             } from './modules/mirdeep2'
+include { QUANT              } from './modules/mirdeep2'
 
 
 
@@ -105,5 +107,9 @@ workflow {
 
     MAPPER(ch_pin, writeChannelToFile.out.config_file)
 
-     
+    if( params.genome != null ){
+
+        QUANT(ch_pin, ch_genome, MAPPER.out.collapsed_out)
+
+    } 
 }
