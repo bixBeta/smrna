@@ -66,7 +66,7 @@ include { QUANT              } from './modules/mirdeep2'
 process writeChannelToFile {
 
     tag "writing_config.txt"
-    publishDir "trimmed_fastqs", mode: "symlink"        
+    publishDir "mirdeep2", mode: "symlink"        
 
     input:
     val lines
