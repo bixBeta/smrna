@@ -36,7 +36,7 @@ process MAPPER{
 process QUANT{
 
     maxForks 1
-    tag "$id"
+    tag "$pin"
     label 'process_mirdeep2'
     
     publishDir "mirdeep2", mode: "symlink", overwrite: true
