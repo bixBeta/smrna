@@ -56,9 +56,11 @@ process QUANT{
 
 
     """
+        COLLAPSED=`gunzip ${collapsed}`
+
         quantifier.pl -p /workdir/genomes/smRNA/hairpin.fa \\
             -m /workdir/genomes/smRNA/mature.fa \\
-            -t ${genome} -y ${pin} -r ${collapsed} -W -d
+            -t ${genome} -y ${pin} -r \${COLLAPSED} -W -d
        
     """
 }
