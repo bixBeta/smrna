@@ -56,7 +56,7 @@ process QUANT{
 
 
     """
-        gunzip ${collapsed}
+        gunzip -f ${collapsed}
 
         quantifier.pl -p /workdir/genomes/smRNA/hairpin.fa \\
             -m /workdir/genomes/smRNA/mature.fa \\
