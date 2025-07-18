@@ -1,7 +1,7 @@
 process MAPPER{
 
     maxForks 1
-    tag "$genome"
+    tag "$pin"
     label 'process_mirdeep2'
     
     publishDir "mirdeep2", mode: "symlink", overwrite: true
@@ -36,7 +36,7 @@ process MAPPER{
 process QUANT{
 
     maxForks 1
-    tag "$pin"
+    tag "$genome"
     label 'process_mirdeep2'
     
     publishDir "mirdeep2/expression_analyses/", mode: "symlink", overwrite: true
@@ -66,8 +66,11 @@ process QUANT{
             -t ${genome} -y ${pin} -r ${pin}.collapsed.fa -W -d
 
         
+        cd expression_analyses/expression_analyses_${pin}
         mv miRBase.mrd ${pin}_miRBase.mrd
-
+        mv *.mrd *arf ../../
+        cd ../../
+        
         gzip *.arf *.fa *.mrd
 
         awk 'BEGIN {OFS="\t"; m=0} \\
