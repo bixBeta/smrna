@@ -9,7 +9,6 @@ params.sheet                    = "sample-sheet.csv"
 params.id                       = "TREX_ID"
 params.genome                   = null
 params.instrument               = "nova"
-params.genome                   = null
 
 if( params.help ) {
 
