@@ -13,8 +13,10 @@ process FASTP {
     
     output:
         tuple val(id), path("*trimmed.fq.gz"), path("*.fasta"), val(config)         , emit: trimmed_fqs
-             
-        
+        path("${id}.fastp.json")                                                    , emit: json
+        path("${id}.fastp.html")                                                    , emit: html
+
+
     script:
 
     if ( runmode == "nova" ){
@@ -22,7 +24,8 @@ process FASTP {
         """
         fastp \
         -z 4 -w 16 \
-        --length_required 10 --qualified_quality_phred 20 \
+        --adapter_sequence ${params.adapter} \
+        --length_required ${params.min_len} --qualified_quality_phred 20 \
         --trim_poly_g \
         -i ${reads} \
         -o ${id}_trimmed.fq.gz \
@@ -42,7 +45,8 @@ process FASTP {
         """
             fastp \
             -z 4 -w 16 \
-            --length_required 10 --qualified_quality_phred 20 \
+            --adapter_sequence ${params.adapter} \
+            --length_required ${params.min_len} --qualified_quality_phred 20 \
             -i ${reads} \
             -o ${id}_trimmed.fq.gz \
             -h ${id}.fastp.html \
@@ -51,8 +55,8 @@ process FASTP {
 
         gunzip ${id}_trimmed.fq.gz
         fastq2fasta.pl ${id}_trimmed.fq > ${id}.fasta
-        ${id}_trimmed.fq
-        
+        gzip ${id}_trimmed.fq
+
         """
 
 

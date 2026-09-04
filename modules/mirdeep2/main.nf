@@ -14,7 +14,9 @@ process MAPPER{
     output:
         path("mirmap_firstbase_readlengthcounts.txt")     , emit: awk_out
         path("${pin}.collapsed.fa.gz")                    , emit: collapsed_out
-             
+        path("mapper_mqc_versions.yml")                   , emit: versions
+
+
 
 
     script:
@@ -26,8 +28,16 @@ process MAPPER{
 
         gzip ${pin}.collapsed.fa
 
-        awk 'BEGIN {OFS="\t"; m=0} {if(FNR%2==1) {s=substr(\$1,2,3); c=substr(\$1,match(\$1,"_x")+2,15);} else { l=length(\$1); f=substr(\$1,1,1); a[s,l,f,m]++; b[s,l,f,m]=b[s,l,f,m]+c;s=0;c=0;l=0;f=0; m=0}} END {print "library\treadlength\tbase1\tmiRBaseMatch\t#distinctReads\t#reads"; for (var in a) {split(var,q,SUBSEP); print q[1], q[2], q[3], q[4], a[var], b[var]} }' <(zcat ${pin}.collapsed.fa.gz) > mirmap_firstbase_readlengthcounts.txt 
-        
+        awk 'BEGIN {OFS="\t"; m=0} {if(FNR%2==1) {s=substr(\$1,2,3); c=substr(\$1,match(\$1,"_x")+2,15);} else { l=length(\$1); f=substr(\$1,1,1); a[s,l,f,m]++; b[s,l,f,m]=b[s,l,f,m]+c;s=0;c=0;l=0;f=0; m=0}} END {print "library\treadlength\tbase1\tmiRBaseMatch\t#distinctReads\t#reads"; for (var in a) {split(var,q,SUBSEP); print q[1], q[2], q[3], q[4], a[var], b[var]} }' <(zcat ${pin}.collapsed.fa.gz) > mirmap_firstbase_readlengthcounts.txt
+
+        # mapper.pl carries no version string of its own; miRDeep2.pl prints the
+        # package version in its start-up banner before it parses any arguments.
+        MIRDEEP_VERSION=\$(miRDeep2.pl 2>&1 | grep -oE 'miRDeep[0-9]+(\\.[0-9]+){2,3}' | head -1 | sed 's/^miRDeep//') || true
+        [ -n "\$MIRDEEP_VERSION" ] || MIRDEEP_VERSION="unknown"
+
+        # Flat form: one miRDeep2 row rather than a row per script. QUANT writes
+        # the same key, and MultiQC de-duplicates identical versions.
+        printf 'miRDeep2: ["%s"]\\n' "\$MIRDEEP_VERSION" > mapper_mqc_versions.yml
 
     """
 }
@@ -53,6 +63,7 @@ process QUANT{
         path("*.mrd.gz")                                        , emit: mrd_out
         path("*.csv")                                           , emit: counts_out
         path("*.html")                                          , emit: html_out
+        path("quant_mqc_versions.yml")                          , emit: versions
 
 
     script:
@@ -81,6 +92,11 @@ process QUANT{
             a[s,l,f,m]++; b[s,l,f,m]=b[s,l,f,m]+c;s=0;c=0;l=0;f=0; m=0}} \\
             END {print "library\treadlength\tbase1\tmiRBaseMatch\t#distinctReads\t#reads"; \\
             for (var in a) {split(var,q,SUBSEP); print q[1], q[2], q[3], q[4], a[var], b[var]} }' <(zcat *miRBase.mrd.gz) <(zcat *collapsed.fa.gz) > quant_mirmap_firstbase_readlengthcounts.txt
+
+        MIRDEEP_VERSION=\$(miRDeep2.pl 2>&1 | grep -oE 'miRDeep[0-9]+(\\.[0-9]+){2,3}' | head -1 | sed 's/^miRDeep//') || true
+        [ -n "\$MIRDEEP_VERSION" ] || MIRDEEP_VERSION="unknown"
+
+        printf 'miRDeep2: ["%s"]\\n' "\$MIRDEEP_VERSION" > quant_mqc_versions.yml
 
     """
 }
