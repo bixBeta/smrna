@@ -10,6 +10,7 @@ process SMRNA_MQC_TABLES {
         val(pin)
         path(table)
         path(sheet)
+        val(mirbase)
 
     output:
         path("mqc/*_mqc.yaml")      , emit: mqc_files
@@ -17,13 +18,17 @@ process SMRNA_MQC_TABLES {
 
     script:
 
+    // Set when QUANT ran. The miRBase panel and metric are then always emitted,
+    // so a run that mapped nothing shows 0% instead of dropping the section.
+    def mirbase_arg = mirbase ? "--mirbase" : ""
+
     """
         mkdir -p mqc
 
         smrna_mqc_tables.py ${table} \\
             --sample-sheet ${sheet} \\
             --outdir mqc \\
-            --prefix smrna
+            --prefix smrna ${mirbase_arg}
     """
 }
 

@@ -137,10 +137,11 @@ workflow {
 
     MAPPER(ch_pin, WCONFIG.out.config_file)
 
-    // Collect software versions
+    // Collect software versions. FASTP runs per sample so its channel needs
+    // .first(); MAPPER and QUANT run once each and are already value channels.
     ch_versions = Channel.empty()
     ch_versions = ch_versions.mix(ch_trim_vers.first())
-    ch_versions = ch_versions.mix(MAPPER.out.versions.first())
+    ch_versions = ch_versions.mix(MAPPER.out.versions)
 
     // QUANT fills in the miRBaseMatch column; without it MAPPER's table has the
     // flag hard-coded to 0, so the miRBase panel is simply omitted downstream.
@@ -149,7 +150,7 @@ workflow {
         QUANT(ch_pin, ch_genome, MAPPER.out.collapsed_out)
 
         ch_awk_table = QUANT.out.awk_quant_out
-        ch_versions  = ch_versions.mix(QUANT.out.versions.first())
+        ch_versions  = ch_versions.mix(QUANT.out.versions)
 
     } else {
 
@@ -159,7 +160,7 @@ workflow {
 
     DUMP_VERSIONS(ch_versions.collect())
 
-    SMRNA_MQC_TABLES(ch_pin, ch_awk_table, ch_sheet_f)
+    SMRNA_MQC_TABLES(ch_pin, ch_awk_table, ch_sheet_f, params.genome != null)
 
     MULTIQC(
         ch_pin,

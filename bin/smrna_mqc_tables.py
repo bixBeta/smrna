@@ -35,6 +35,12 @@ def parse_args():
                    help="pipeline sample sheet, to map config codes back to labels")
     p.add_argument("--outdir", default=".", help="where to write the *_mqc.yaml files")
     p.add_argument("--prefix", default="smrna", help="id prefix for the MultiQC sections")
+    p.add_argument("--mirbase", action="store_true",
+                   help="QUANT ran, so the miRBaseMatch column is meaningful. Emits the "
+                        "miRBase panel and metric even when nothing matched, so a run "
+                        "that mapped nothing reads as 0%% rather than as a missing "
+                        "section. Without it the flag is hard-coded 0 and both are "
+                        "omitted, because the annotation was never performed.")
     return p.parse_args()
 
 
@@ -235,7 +241,7 @@ def main():
          for s in samples},
     )
 
-    if any_match:
+    if args.mirbase:
         write_section(
             out("mirbase_by_length"),
             {
@@ -271,7 +277,6 @@ def main():
             "description": "Unique collapsed sequences",
             "format": "{:,.0f}",
             "scale": "Purples",
-            "hidden": True,
         }),
         (f"{prefix}_pct_mirna_len", {
             "title": "% 21-23 nt",
@@ -290,7 +295,7 @@ def main():
             "scale": "RdYlGn",
         }),
     ]
-    if any_match:
+    if args.mirbase:
         headers.append((f"{prefix}_pct_mirbase", {
             "title": "% miRBase",
             "description": "Reads aligning to a miRBase hairpin",
@@ -308,7 +313,7 @@ def main():
             f"{prefix}_pct_mirna_len": pct(mirna_range_reads[s], total_reads[s]),
             f"{prefix}_pct_5p_u": pct(reads_by_base[s].get("T", 0), total_reads[s]),
         }
-        if any_match:
+        if args.mirbase:
             row[f"{prefix}_pct_mirbase"] = pct(total_matched[s], total_reads[s])
         stats[s] = row
 
@@ -318,7 +323,8 @@ def main():
         "smrna_mqc_tables: {} librar{}, lengths {}-{}, miRBase flag {}\n".format(
             len(samples), "y" if len(samples) == 1 else "ies",
             min(lengths), max(lengths),
-            "present" if any_match else "absent (MAPPER-only run)"))
+            ("annotated, {} matched".format("some" if any_match else "none")
+             if args.mirbase else "not annotated (MAPPER-only run)")))
 
 
 if __name__ == "__main__":
