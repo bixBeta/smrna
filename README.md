@@ -5,7 +5,7 @@ Nextflow pipeline for smRNA seq runs.
 ## Usage
 
 ```
-R  N  A  -  S  E  Q      W  O  R  K  F  L  O  W  -  @bixBeta
+s  m  R  N  A  -  S  E  Q      W  O  R  K  F  L  O  W  -  @bixBeta
 =======================================================================================================================================================================
 Usage:
     nextflow run https://github.com/bixbeta/smrna -r main < args ... >
@@ -23,7 +23,7 @@ Args:
         .
         . etc.
         -------------------------------------------
-    * --fastp           : Invokes fastp trimming module.
+    * --fastp           : Invokes fastp trimming module < default: true; use --fastp false to skip trimming >
     * --genome          : Invokes Quant + specifies reference genome; available options < hsa, mmu, cel > 
     * --instrument      : Use 'nova' for 2 channel chemistry, else use 'hiseq'
     * --adapter         : 3' adapter to trim < default: AGATCGGAAGAGCACACGTCT, NEBNext Small RNA 3' SR Adaptor >

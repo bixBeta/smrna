@@ -54,9 +54,9 @@ jobs:
       - name: README help block matches actual output
         run: |
           set -euo pipefail
-          sed -n '/^R  N  A  -  S  E  Q/,/--min_len/p' /tmp/help.txt \
+          sed -n '/^s  m  R  N  A  -  S  E  Q/,/--min_len/p' /tmp/help.txt \
             | sed -E 's@-r [A-Za-z0-9._-]+ < args@-r REV < args@' > /tmp/a.txt
-          sed -n '/^R  N  A  -  S  E  Q/,/--min_len/p' README.md \
+          sed -n '/^s  m  R  N  A  -  S  E  Q/,/--min_len/p' README.md \
             | sed -E 's@-r [A-Za-z0-9._-]+ < args@-r REV < args@' > /tmp/b.txt
           diff -u /tmp/b.txt /tmp/a.txt || {
             echo "README help block is out of date - repaste 'nextflow run . --help'"; exit 1; }

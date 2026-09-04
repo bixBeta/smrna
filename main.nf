@@ -10,6 +10,10 @@ params.id                       = "TREX_ID"
 params.genome                   = null
 params.instrument               = "nova"
 
+// Defaults to true so existing invocations keep trimming. --fastp false skips
+// the trimming step and only converts the fastqs to fasta for mapper.pl.
+params.fastp                    = true
+
 // NEBNext Small RNA 3' SR Adaptor. The kit uses fixed adapters with no
 // randomised ends or UMI, so nothing needs trimming off the read termini.
 params.adapter                  = "AGATCGGAAGAGCACACGTCT"
@@ -18,7 +22,7 @@ params.min_len                  = 10
 if( params.help ) {
 
 log.info """
-R  N  A  -  S  E  Q      W  O  R  K  F  L  O  W  -  @bixBeta
+s  m  R  N  A  -  S  E  Q      W  O  R  K  F  L  O  W  -  @bixBeta
 =======================================================================================================================================================================
 Usage:
     nextflow run https://github.com/bixbeta/smrna -r ${workflow.revision ?: 'main'} < args ... >
@@ -36,7 +40,7 @@ Args:
         .
         . etc.
         -------------------------------------------
-    * --fastp           : Invokes fastp trimming module.
+    * --fastp           : Invokes fastp trimming module < default: true; use --fastp false to skip trimming >
     * --genome          : Invokes Quant + specifies reference genome; available options < hsa, mmu, cel > 
     * --instrument      : Use 'nova' for 2 channel chemistry, else use 'hiseq'
     * --adapter         : 3' adapter to trim < default: AGATCGGAAGAGCACACGTCT, NEBNext Small RNA 3' SR Adaptor >
@@ -68,6 +72,7 @@ ch_mqc_logo = channel.value(file("$projectDir/img/trex-extended-logo.png"))
 // Import Modules:
 
 include { FASTP              } from './modules/fastp'
+include { FASTQ2FASTA        } from './modules/fastp'
 include { MAPPER             } from './modules/mirdeep2'
 include { QUANT              } from './modules/mirdeep2'
 include { SMRNA_MQC_TABLES   } from './modules/multiqc'
@@ -95,9 +100,23 @@ process WCONFIG {
 
 workflow {
 
-    FASTP(ch_meta)
+    if( params.fastp ){
 
-    ch_fastp_out = FASTP.out.trimmed_fqs
+        FASTP(ch_meta)
+
+        ch_fastp_out  = FASTP.out.trimmed_fqs
+        ch_fastp_json = FASTP.out.json
+        ch_trim_vers  = FASTP.out.versions
+
+    } else {
+
+        FASTQ2FASTA(ch_meta)
+
+        ch_fastp_out  = FASTQ2FASTA.out.trimmed_fqs
+        ch_fastp_json = channel.empty()
+        ch_trim_vers  = channel.empty()
+
+    }
 
     ch_config = ch_fastp_out
                     // .collect()
@@ -113,7 +132,7 @@ workflow {
 
     // QUANT fills in the miRBaseMatch column; without it MAPPER's table has the
     // flag hard-coded to 0, so the miRBase panel is simply omitted downstream.
-    ch_versions = MAPPER.out.versions
+    ch_versions = MAPPER.out.versions.mix(ch_trim_vers)
 
     if( params.genome != null ){
 
@@ -132,7 +151,7 @@ workflow {
 
     MULTIQC(
         ch_pin,
-        FASTP.out.json.collect(),
+        ch_fastp_json.collect().ifEmpty([]),
         SMRNA_MQC_TABLES.out.mqc_files.collect(),
         ch_versions.collect(),
         ch_mqc_conf,
