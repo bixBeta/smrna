@@ -23,7 +23,9 @@ Args:
         .
         . etc.
         -------------------------------------------
-    * --fastp           : Invokes fastp trimming module < default: true; use --fastp false to skip trimming >
+    * --fastp           : Invokes fastp trimming module < default: false >
+                         Strongly recommended for smRNA: inserts are ~22 nt, so reads run
+                         through into adapter and will not map to miRBase untrimmed.
     * --genome          : Invokes Quant + specifies reference genome; available options < hsa, mmu, cel > 
     * --instrument      : Use 'nova' for 2 channel chemistry, else use 'hiseq'
     * --adapter         : 3' adapter to trim < default: AGATCGGAAGAGCACACGTCT, NEBNext Small RNA 3' SR Adaptor >

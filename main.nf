@@ -10,9 +10,9 @@ params.id                       = "TREX_ID"
 params.genome                   = null
 params.instrument               = "nova"
 
-// Defaults to true so existing invocations keep trimming. --fastp false skips
-// the trimming step and only converts the fastqs to fasta for mapper.pl.
-params.fastp                    = true
+// Opt-in, matching the convention in the bixBeta nextflow repo. Without it the
+// fastqs are only converted to fasta for mapper.pl, with no trimming.
+params.fastp                    = false
 
 // NEBNext Small RNA 3' SR Adaptor. The kit uses fixed adapters with no
 // randomised ends or UMI, so nothing needs trimming off the read termini.
@@ -40,7 +40,9 @@ Args:
         .
         . etc.
         -------------------------------------------
-    * --fastp           : Invokes fastp trimming module < default: true; use --fastp false to skip trimming >
+    * --fastp           : Invokes fastp trimming module < default: false >
+                         Strongly recommended for smRNA: inserts are ~22 nt, so reads run
+                         through into adapter and will not map to miRBase untrimmed.
     * --genome          : Invokes Quant + specifies reference genome; available options < hsa, mmu, cel > 
     * --instrument      : Use 'nova' for 2 channel chemistry, else use 'hiseq'
     * --adapter         : 3' adapter to trim < default: AGATCGGAAGAGCACACGTCT, NEBNext Small RNA 3' SR Adaptor >
@@ -109,6 +111,10 @@ workflow {
         ch_trim_vers  = FASTP.out.versions
 
     } else {
+
+        log.warn "Running without --fastp: reads are not adapter trimmed. smRNA " +
+                 "inserts are shorter than the read, so untrimmed reads carry adapter " +
+                 "and will not map to miRBase."
 
         FASTQ2FASTA(ch_meta)
 
