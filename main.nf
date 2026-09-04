@@ -9,7 +9,6 @@ params.sheet                    = "sample-sheet.csv"
 params.id                       = "TREX_ID"
 params.genome                   = null
 params.instrument               = "nova"
-params.genome                   = null
 
 // NEBNext Small RNA 3' SR Adaptor. The kit uses fixed adapters with no
 // randomised ends or UMI, so nothing needs trimming off the read termini.
@@ -22,7 +21,7 @@ log.info """
 R  N  A  -  S  E  Q      W  O  R  K  F  L  O  W  -  @bixBeta
 =======================================================================================================================================================================
 Usage:
-    nextflow run https://github.com/bixbeta/smrna -r g2 < args ... >
+    nextflow run https://github.com/bixbeta/smrna -r ${workflow.revision ?: 'main'} < args ... >
 
 Args:
     * --id             : TREx Project ID 
@@ -59,8 +58,6 @@ ch_meta     = ch_sheet
                 | splitCsv( header:true )
                 | map { row -> [row.label, file(row.fastq1), row.config]}
                 | view
-
-ch_genome   = channel.value(params.genome)
 
 // Re-read as a value channel: ch_sheet is consumed by splitCsv above, and
 // SMRNA_MQC_TABLES needs the sheet again to map config codes back to labels.

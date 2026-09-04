@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    paths:
+      - 'main.nf'
+      - 'nextflow.config'
+      - 'modules/**'
+      - 'bin/**'
+      - 'assets/**'
+      - 'README.md'
+      - '.github/workflows/ci.yml'
+  # A path filter on push alone still runs the full job on doc-only PRs, so the
+  # same list has to be repeated here. GitHub Actions rejects YAML anchors.
+  pull_request:
+    paths:
+      - 'main.nf'
+      - 'nextflow.config'
+      - 'modules/**'
+      - 'bin/**'
+      - 'assets/**'
+      - 'README.md'
+      - '.github/workflows/ci.yml'
+  workflow_dispatch:
+
+jobs:
+  help-and-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Pinned below 26: the strict parser in Nextflow >= 26 rejects the
+      # file-scope statements this pipeline uses.
+      - name: Install Nextflow
+        run: |
+          set -euo pipefail
+          curl -fsSL https://github.com/nextflow-io/nextflow/releases/download/v25.04.1/nextflow-25.04.1-dist -o "$HOME/nextflow"
+          chmod +x "$HOME/nextflow"
+          echo "$HOME" >> "$GITHUB_PATH"
+
+      - name: Capture --help
+        run: nextflow run . --help 2>&1 | tee /tmp/help.txt
+
+      # The README code block is the rendered --help output, so it can go stale
+      # silently. The -r revision differs by design (workflow.revision is null
+      # on a local checkout, so --help prints the "main" fallback), so normalise
+      # that token before comparing.
+      - name: README help block matches actual output
+        run: |
+          set -euo pipefail
+          sed -n '/^R  N  A  -  S  E  Q/,/--min_len/p' /tmp/help.txt \
+            | sed -E 's@-r [A-Za-z0-9._-]+ < args@-r REV < args@' > /tmp/a.txt
+          sed -n '/^R  N  A  -  S  E  Q/,/--min_len/p' README.md \
+            | sed -E 's@-r [A-Za-z0-9._-]+ < args@-r REV < args@' > /tmp/b.txt
+          diff -u /tmp/b.txt /tmp/a.txt || {
+            echo "README help block is out of date - repaste 'nextflow run . --help'"; exit 1; }
+
+      # --help exits before the include statements, so the step above never
+      # reaches the modules. This parses the whole DAG without running anything.
+      - name: Config and DAG resolve
+        run: |
+          set -euo pipefail
+          nextflow config . > /dev/null
+          printf 'label,fastq1,config\nSS1,SS1_R1.fastq.gz,101\n' > sample-sheet.csv
+          touch SS1_R1.fastq.gz
+          nextflow run . -preview --id CI_TEST --sheet sample-sheet.csv
+
+      - name: Reshape script produces valid MultiQC sections
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import random
+          random.seed(1)
+          with open("collapsed.fa", "w") as fh:
+              for i in range(500):
+                  L = random.choice([21, 22, 23, 28])
+                  seq = "T" + "".join(random.choice("ACGT") for _ in range(L - 1))
+                  fh.write(f">101_{i:07d}_x{random.randint(1,99)}\n{seq}\n")
+          PY
+          awk 'BEGIN {OFS="\t"; m=0} {if(FNR%2==1) {s=substr($1,2,3); c=substr($1,match($1,"_x")+2,15);} else { l=length($1); f=substr($1,1,1); a[s,l,f,m]++; b[s,l,f,m]=b[s,l,f,m]+c;s=0;c=0;l=0;f=0; m=0}} END {print "library\treadlength\tbase1\tmiRBaseMatch\t#distinctReads\t#reads"; for (var in a) {split(var,q,SUBSEP); print q[1], q[2], q[3], q[4], a[var], b[var]} }' collapsed.fa > table.txt
+          python3 bin/smrna_mqc_tables.py table.txt --sample-sheet sample-sheet.csv --outdir mqc
+          python3 -c "
+          import yaml, glob, sys
+          files = sorted(glob.glob('mqc/*_mqc.yaml'))
+          assert files, 'no sections written'
+          for f in files:
+              d = yaml.safe_load(open(f))
+              assert 'data' in d and d['data'], f'{f} has no data'
+          print(f'ok: {len(files)} sections')
+          "
