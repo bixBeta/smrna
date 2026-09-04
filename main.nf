@@ -78,7 +78,7 @@ include { MULTIQC            } from './modules/multiqc'
 
 
 
-process writeChannelToFile {
+process WCONFIG {
 
     tag "writing_config.txt"
     publishDir "mirdeep2", mode: "symlink"        
@@ -110,9 +110,9 @@ workflow {
                     .collect()
                     .view()
 
-    writeChannelToFile(ch_config)
+    WCONFIG(ch_config)
 
-    MAPPER(ch_pin, writeChannelToFile.out.config_file)
+    MAPPER(ch_pin, WCONFIG.out.config_file)
 
     // QUANT fills in the miRBaseMatch column; without it MAPPER's table has the
     // flag hard-coded to 0, so the miRBase panel is simply omitted downstream.
