@@ -48,6 +48,7 @@ process MULTIQC {
         path(mqc_versions)
         path(mqc_config)
         path(logo)
+        val(mqcgenome)
 
     output:
         path("${pin}_multiqc_report.html")      , emit: report
@@ -57,6 +58,8 @@ process MULTIQC {
     script:
 
     """
+        export MQC_GENOME=${mqcgenome}
+
         multiqc -f \\
             -c ${mqc_config} \\
             --cl-config "custom_logo: ${logo}" \\

@@ -71,6 +71,9 @@ ch_sheet_f  = channel.value(file(params.sheet))
 ch_mqc_conf = channel.value(file("$projectDir/assets/multiqc_config.yaml"))
 ch_mqc_logo = channel.value(file("$projectDir/img/trex-extended-logo.png"))
 
+// Shown in the MultiQC report header; NA when the run had no --genome.
+ch_mqc_genome = channel.value(params.genome ?: 'NA')
+
 // Import Modules:
 
 include { FASTP              } from './modules/fastp'
@@ -168,6 +171,7 @@ workflow {
         SMRNA_MQC_TABLES.out.mqc_files.collect(),
         DUMP_VERSIONS.out.mqc_yml,
         ch_mqc_conf,
-        ch_mqc_logo
+        ch_mqc_logo,
+        ch_mqc_genome
     )
 }

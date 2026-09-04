@@ -1,6 +1,12 @@
 show_analysis_paths: False
 show_analysis_time: False
 
+# MQC_GENOME is exported by the MULTIQC process, set to "NA" when the run had
+# no --genome and QUANT never ran.
+report_header_info:
+  - Contact E-mail: 'trex_info@cornell.edu'
+  - Reference Genome: !ENV "${MQC_GENOME}"
+
 # Pin the report to light. Left at its default of true, the template follows the
 # viewer's prefers-color-scheme, so the same report renders dark on some
 # machines and light on others. Note this also removes the dark-mode toggle.
