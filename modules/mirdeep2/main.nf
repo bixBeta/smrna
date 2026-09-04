@@ -14,7 +14,7 @@ process MAPPER{
     output:
         path("mirmap_firstbase_readlengthcounts.txt")     , emit: awk_out
         path("${pin}.collapsed.fa.gz")                    , emit: collapsed_out
-        path("mapper_mqc_versions.yml")                   , emit: versions
+        path("versions.yml")                              , emit: versions
 
 
 
@@ -35,9 +35,10 @@ process MAPPER{
         MIRDEEP_VERSION=\$(miRDeep2.pl 2>&1 | grep -oE 'miRDeep[0-9]+(\\.[0-9]+){2,3}' | head -1 | sed 's/^miRDeep//') || true
         [ -n "\$MIRDEEP_VERSION" ] || MIRDEEP_VERSION="unknown"
 
-        # Flat form: one miRDeep2 row rather than a row per script. QUANT writes
-        # the same key, and MultiQC de-duplicates identical versions.
-        printf 'miRDeep2: ["%s"]\\n' "\$MIRDEEP_VERSION" > mapper_mqc_versions.yml
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            mirdeep2: \$MIRDEEP_VERSION
+        END_VERSIONS
 
     """
 }
@@ -63,7 +64,7 @@ process QUANT{
         path("*.mrd.gz")                                        , emit: mrd_out
         path("*.csv")                                           , emit: counts_out
         path("*.html")                                          , emit: html_out
-        path("quant_mqc_versions.yml")                          , emit: versions
+        path("versions.yml")                                    , emit: versions
 
 
     script:
@@ -96,7 +97,10 @@ process QUANT{
         MIRDEEP_VERSION=\$(miRDeep2.pl 2>&1 | grep -oE 'miRDeep[0-9]+(\\.[0-9]+){2,3}' | head -1 | sed 's/^miRDeep//') || true
         [ -n "\$MIRDEEP_VERSION" ] || MIRDEEP_VERSION="unknown"
 
-        printf 'miRDeep2: ["%s"]\\n' "\$MIRDEEP_VERSION" > quant_mqc_versions.yml
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            mirdeep2: \$MIRDEEP_VERSION
+        END_VERSIONS
 
     """
 }

@@ -40,7 +40,7 @@ process MULTIQC {
         val(pin)
         path('fastp/*')
         path('custom_content/*')
-        path('versions/*')
+        path(mqc_versions)
         path(mqc_config)
         path(logo)
 

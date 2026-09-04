@@ -79,6 +79,7 @@ include { MAPPER             } from './modules/mirdeep2'
 include { QUANT              } from './modules/mirdeep2'
 include { SMRNA_MQC_TABLES   } from './modules/multiqc'
 include { MULTIQC            } from './modules/multiqc'
+include { DUMP_VERSIONS      } from './modules/versions'
 
 
 
@@ -136,16 +137,19 @@ workflow {
 
     MAPPER(ch_pin, WCONFIG.out.config_file)
 
+    // Collect software versions
+    ch_versions = Channel.empty()
+    ch_versions = ch_versions.mix(ch_trim_vers.first())
+    ch_versions = ch_versions.mix(MAPPER.out.versions.first())
+
     // QUANT fills in the miRBaseMatch column; without it MAPPER's table has the
     // flag hard-coded to 0, so the miRBase panel is simply omitted downstream.
-    ch_versions = MAPPER.out.versions.mix(ch_trim_vers)
-
     if( params.genome != null ){
 
         QUANT(ch_pin, ch_genome, MAPPER.out.collapsed_out)
 
         ch_awk_table = QUANT.out.awk_quant_out
-        ch_versions  = ch_versions.mix(QUANT.out.versions)
+        ch_versions  = ch_versions.mix(QUANT.out.versions.first())
 
     } else {
 
@@ -153,13 +157,15 @@ workflow {
 
     }
 
+    DUMP_VERSIONS(ch_versions.collect())
+
     SMRNA_MQC_TABLES(ch_pin, ch_awk_table, ch_sheet_f)
 
     MULTIQC(
         ch_pin,
         ch_fastp_json.collect().ifEmpty([]),
         SMRNA_MQC_TABLES.out.mqc_files.collect(),
-        ch_versions.collect(),
+        DUMP_VERSIONS.out.mqc_yml,
         ch_mqc_conf,
         ch_mqc_logo
     )
