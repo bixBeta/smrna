@@ -20,12 +20,14 @@ process FASTP {
 
     script:
 
+    // Only pass an adapter when --adapter is given; otherwise fastp auto-detects.
+    def adapter_arg = params.adapter ? "--adapter_sequence ${params.adapter}" : ""
+
     if ( runmode == "nova" ){
 
         """
         fastp \
-        -z 4 -w 16 \
-        --adapter_sequence ${params.adapter} \
+        -z 4 -w 16 ${adapter_arg} \
         --length_required ${params.min_len} --qualified_quality_phred 20 \
         --trim_poly_g \
         -i ${reads} \
@@ -49,8 +51,7 @@ process FASTP {
 
         """
         fastp \
-        -z 4 -w 16 \
-        --adapter_sequence ${params.adapter} \
+        -z 4 -w 16 ${adapter_arg} \
         --length_required ${params.min_len} --qualified_quality_phred 20 \
         -i ${reads} \
         -o ${id}_trimmed.fq.gz \

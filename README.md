@@ -28,7 +28,7 @@ Args:
                          through into adapter and will not map to miRBase untrimmed.
     * --genome          : Invokes Quant + specifies reference genome; available options < hsa, mmu, cel > 
     * --instrument      : Use 'nova' for 2 channel chemistry, else use 'hiseq'
-    * --adapter         : 3' adapter to trim < default: AGATCGGAAGAGCACACGTCT, NEBNext Small RNA 3' SR Adaptor >
+    * --adapter         : 3' adapter to trim < default: auto-detected by fastp; e.g. AGATCGGAAGAGCACACGTCT for NEBNext Small RNA >
     * --min_len         : Minimum read length kept after trimming < default: 10 >
 ```
 
