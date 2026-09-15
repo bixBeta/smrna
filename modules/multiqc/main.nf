@@ -10,6 +10,7 @@ process SMRNA_MQC_TABLES {
         val(pin)
         path(table)
         path(sheet)
+        path('fastp/*')
         val(mirbase)
 
     output:
@@ -28,6 +29,7 @@ process SMRNA_MQC_TABLES {
         smrna_mqc_tables.py ${table} \\
             --sample-sheet ${sheet} \\
             --outdir mqc \\
+            --fastp-dir fastp \\
             --prefix smrna ${mirbase_arg}
     """
 }

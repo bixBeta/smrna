@@ -163,7 +163,8 @@ workflow {
 
     DUMP_VERSIONS(ch_versions.collect())
 
-    SMRNA_MQC_TABLES(ch_pin, ch_awk_table, ch_sheet_f, params.genome != null)
+    SMRNA_MQC_TABLES(ch_pin, ch_awk_table, ch_sheet_f,
+                     ch_fastp_json.collect().ifEmpty([]), params.genome != null)
 
     MULTIQC(
         ch_pin,

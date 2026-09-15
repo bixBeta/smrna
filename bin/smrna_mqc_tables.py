@@ -15,6 +15,8 @@ TSV custom-content parser.
 
 import argparse
 import csv
+import glob
+import json
 import os
 import sys
 from collections import defaultdict
@@ -35,6 +37,9 @@ def parse_args():
                    help="pipeline sample sheet, to map config codes back to labels")
     p.add_argument("--outdir", default=".", help="where to write the *_mqc.yaml files")
     p.add_argument("--prefix", default="smrna", help="id prefix for the MultiQC sections")
+    p.add_argument("--fastp-dir",
+                   help="directory of <sample>.fastp.json files. Adds the raw and m10 "
+                        "read counts, which the collapsed table cannot supply.")
     p.add_argument("--mirbase", action="store_true",
                    help="QUANT ran, so the miRBaseMatch column is meaningful. Emits the "
                         "miRBase panel and metric even when nothing matched, so a run "
@@ -56,6 +61,20 @@ def read_sample_map(path):
             if code and label:
                 mapping[code] = label
     return mapping
+
+
+def read_fastp(dirname):
+    """sample -> (raw, m10) from fastp JSONs, named <sample>.fastp.json."""
+    out = {}
+    for path in sorted(glob.glob(os.path.join(dirname or "", "*.fastp.json"))):
+        sample = os.path.basename(path)[: -len(".fastp.json")]
+        try:
+            summary = json.load(open(path))["summary"]
+            out[sample] = (summary["before_filtering"]["total_reads"],
+                           summary["after_filtering"]["total_reads"])
+        except (ValueError, KeyError) as exc:
+            sys.stderr.write(f"{path}: skipping, could not read summary ({exc})\n")
+    return out
 
 
 def read_table(path):
@@ -139,6 +158,7 @@ def pct(numerator, denominator):
 def main():
     args = parse_args()
     sample_map = read_sample_map(args.sample_sheet)
+    fastp = read_fastp(args.fastp_dir) if args.fastp_dir else {}
 
     reads_by_len = defaultdict(lambda: defaultdict(int))
     distinct_by_len = defaultdict(lambda: defaultdict(int))
@@ -265,18 +285,38 @@ def main():
              for s in samples},
         )
 
-    headers = [
+    # shared_key read_count hands formatting to MultiQC's read_count_multiplier,
+    # the same mechanism behind fastp's "Reads After Filtering" column, so every
+    # count here renders in M with identical precision.
+    headers = []
+    if fastp:
+        headers += [
+            (f"{prefix}_raw", {
+                "title": "Raw reads",
+                "description": "Reads into fastp (before_filtering.total_reads)",
+                "scale": "Greys",
+                "shared_key": "read_count",
+            }),
+            (f"{prefix}_m10", {
+                "title": "m10",
+                "description": "Reads surviving fastp trimming "
+                               "(after_filtering.total_reads); matches Reads After Filtering",
+                "scale": "Blues",
+                "shared_key": "read_count",
+            }),
+        ]
+    headers += [
         (f"{prefix}_total_reads", {
             "title": "smRNA reads",
             "description": "Total collapsed reads assigned to this library",
-            "format": "{:,.0f}",
             "scale": "Blues",
+            "shared_key": "read_count",
         }),
         (f"{prefix}_distinct", {
             "title": "Distinct seqs",
             "description": "Unique collapsed sequences",
-            "format": "{:,.0f}",
             "scale": "Purples",
+            "shared_key": "read_count",
         }),
         (f"{prefix}_pct_mirna_len", {
             "title": "% 21-23 nt",
@@ -315,6 +355,10 @@ def main():
         }
         if args.mirbase:
             row[f"{prefix}_pct_mirbase"] = pct(total_matched[s], total_reads[s])
+        if s in fastp:
+            raw, m10 = fastp[s]
+            row[f"{prefix}_raw"] = raw
+            row[f"{prefix}_m10"] = m10
         stats[s] = row
 
     write_general_stats(out("stats"), headers, stats)
@@ -325,6 +369,11 @@ def main():
             min(lengths), max(lengths),
             ("annotated, {} matched".format("some" if any_match else "none")
              if args.mirbase else "not annotated (MAPPER-only run)")))
+    if fastp:
+        missing = [s for s in samples if s not in fastp]
+        sys.stderr.write("smrna_mqc_tables: fastp counts for {}/{} samples{}\n".format(
+            len(samples) - len(missing), len(samples),
+            "; missing " + ", ".join(missing) if missing else ""))
 
 
 if __name__ == "__main__":
