@@ -14,9 +14,9 @@ params.instrument               = "nova"
 // fastqs are only converted to fasta for mapper.pl, with no trimming.
 params.fastp                    = false
 
-// NEBNext Small RNA 3' SR Adaptor. The kit uses fixed adapters with no
-// randomised ends or UMI, so nothing needs trimming off the read termini.
-params.adapter                  = "AGATCGGAAGAGCACACGTCT"
+// Unset by default, so fastp auto-detects the adapter as it always has. Pass
+// e.g. AGATCGGAAGAGCACACGTCT (NEBNext Small RNA 3' SR Adaptor) to force one.
+params.adapter                  = null
 params.min_len                  = 10
 
 if( params.help ) {
@@ -45,7 +45,7 @@ Args:
                          through into adapter and will not map to miRBase untrimmed.
     * --genome          : Invokes Quant + specifies reference genome; available options < hsa, mmu, cel > 
     * --instrument      : Use 'nova' for 2 channel chemistry, else use 'hiseq'
-    * --adapter         : 3' adapter to trim < default: AGATCGGAAGAGCACACGTCT, NEBNext Small RNA 3' SR Adaptor >
+    * --adapter         : 3' adapter to trim < default: auto-detected by fastp; e.g. AGATCGGAAGAGCACACGTCT for NEBNext Small RNA >
     * --min_len         : Minimum read length kept after trimming < default: 10 >
 
 
