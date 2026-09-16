@@ -3,10 +3,7 @@ process SMRNA_MQC_TABLES {
     tag "$pin"
     label 'process_mqc'
 
-    // saveAs strips the mqc/ level, so published files sit directly in
-    // multiqc/custom_content/ and match what MultiQC is actually handed.
-    publishDir "multiqc/custom_content", mode: "copy", overwrite: true,
-               saveAs: { it.substring(it.lastIndexOf('/') + 1) }
+    publishDir "multiqc/custom_content", mode: "copy", overwrite: true
 
 
     input:
@@ -18,7 +15,7 @@ process SMRNA_MQC_TABLES {
         val(mirbase)
 
     output:
-        path("mqc/*_mqc.yaml")      , emit: mqc_files
+        path("*_mqc.yaml")          , emit: mqc_files
 
 
     script:
@@ -28,15 +25,15 @@ process SMRNA_MQC_TABLES {
     def mirbase_arg = mirbase ? "--mirbase" : ""
 
     """
-        # Start from an empty directory: the output glob is mqc/*_mqc.yaml, so a
-        # reused task dir would otherwise republish sections this run no longer
-        # generates.
-        rm -rf mqc
-        mkdir -p mqc
+        # Written into the task directory root, not a subdirectory: an output
+        # glob with a directory component makes publishDir recreate that level,
+        # which produced multiqc/custom_content/mqc/. Clear first so a reused
+        # task directory cannot republish a section this run no longer writes.
+        rm -f *_mqc.yaml
 
         python3 ${reshape_script} ${table} \\
             --sample-sheet ${sheet} \\
-            --outdir mqc \\
+            --outdir . \\
             --fastp-dir fastp \\
             --prefix smrna ${mirbase_arg}
     """
