@@ -44,33 +44,24 @@ remove_sections:
 # Sections sort by descending order, so more negative sinks further down.
 # All-reads blocks first, then the miRBase-mapped set, matching the sheet's
 # two tabs.
+# Sections sort by descending order, so more negative sinks further down.
+# All-reads blocks first, then the miRBase-mapped set, matching the sheet's
+# two tabs. The per-base blocks are one switchable section each.
 report_section_order:
   smrna_length_reads:
     order: -100
-  smrna_base_U:
+  smrna_base_length:
     order: -110
-  smrna_base_A:
-    order: -120
-  smrna_base_C:
-    order: -130
-  smrna_base_G:
-    order: -140
   smrna_mirmapped_length_reads:
-    order: -150
-  smrna_mirmapped_base_U:
-    order: -160
-  smrna_mirmapped_base_A:
-    order: -170
-  smrna_mirmapped_base_C:
-    order: -180
-  smrna_mirmapped_base_G:
-    order: -190
+    order: -120
+  smrna_mirmapped_base_length:
+    order: -130
   smrna_mirbase_by_length:
-    order: -200
+    order: -140
   smrna_first_base:
-    order: -210
+    order: -150
   smrna_mirmapped_first_base:
-    order: -220
+    order: -160
   pipeline_software_versions:
     order: -1000
 

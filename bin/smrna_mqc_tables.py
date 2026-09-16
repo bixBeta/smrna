@@ -143,6 +143,38 @@ def write_section(path, meta, data):
                 out.write(f"        {yaml_key(x)}: {data[sample][x]}\n")
 
 
+def write_switch_section(path, meta, labels, datasets):
+    """A linegraph with one dataset per label, rendered as a switcher.
+
+    MultiQC reads `data` as a list when pconfig carries data_labels, showing a
+    button per entry, so four per-base plots become one section.
+    """
+    with open(path, "w") as out:
+        for key, value in meta.items():
+            if isinstance(value, dict):
+                out.write(f"{key}:\n")
+                for subkey, subvalue in value.items():
+                    out.write(f"    {subkey}: {yaml_scalar(subvalue)}\n")
+                out.write("    data_labels:\n")
+                for label in labels:
+                    first = True
+                    for lk, lv in label.items():
+                        lead = "        - " if first else "          "
+                        out.write(f"{lead}{lk}: {yaml_scalar(lv)}\n")
+                        first = False
+            else:
+                out.write(f"{key}: {yaml_scalar(value)}\n")
+        out.write("data:\n")
+        for dataset in datasets:
+            first_sample = True
+            for sample in sorted(dataset):
+                lead = "    - " if first_sample else "      "
+                out.write(f"{lead}{yaml_key(sample)}:\n")
+                first_sample = False
+                for x in dataset[sample]:
+                    out.write(f"          {yaml_key(x)}: {dataset[sample][x]}\n")
+
+
 def write_general_stats(path, headers, data):
     """generalstats sections take their column config as a list under pconfig."""
     with open(path, "w") as out:
@@ -274,41 +306,40 @@ def main():
             ("The same distribution restricted to reads that aligned to a miRBase "
              "hairpin, as a percentage of each library's mapped reads."))
 
-    # The sheet's four per-base blocks, for each dataset. Each is divided by that
-    # base's own total, not the library total, so the plot shows the shape of the
-    # distribution for reads starting with that base. How common the base is comes
-    # from the 5' nucleotide bias section instead.
-    for ds, ds_label, ds_suffix in (("all", "", "base"),
-                                    ("mir", ", miRBase-mapped reads", "mirmapped_base")):
+    # The sheet's four per-base blocks, folded into one switchable section per
+    # dataset. Each base is still divided by its own total, not the library
+    # total, so the plot shows shape rather than abundance - how common each base
+    # is comes from the 5' nucleotide bias section.
+    for ds, ds_label, name in (("all", "", "base_length"),
+                               ("mir", ", miRBase-mapped reads", "mirmapped_base_length")):
         if ds == "mir" and not args.mirbase:
             continue
-        for base in ("T", "A", "C", "G"):
-            label = "U" if base == "T" else base
-            write_section(
-                out(f"{ds_suffix}_{label}"),
-                {
-                    "id": f"{prefix}_{ds_suffix}_{label}",
-                    "section_name": f"smRNA read length distribution, {label} start{ds_label}",
-                    "description": (
-                        f"Reads beginning with {label}, by length, as a percentage of "
-                        f"that library's {label}-start reads"
-                        f"{' that aligned to a miRBase hairpin' if ds == 'mir' else ''}. "
-                        "Normalised within the base, so this shows shape rather than "
-                        "abundance - see the 5' nucleotide bias section for how common "
-                        f"{label} is."),
-                    "plot_type": "linegraph",
-                    "pconfig": {
-                        "id": f"{prefix}_{ds_suffix}_{label}_plot",
-                        "title": f"smRNA: {label} start, read length distribution{ds_label}",
-                        "xlab": f"Read length (nt), {LEN_MAX} = {LEN_MAX} or more",
-                        "ylab": f"% of {label}-start reads",
-                        "ymin": 0,
-                    },
+        bases = [("T", "U"), ("A", "A"), ("C", "C"), ("G", "G")]
+        write_switch_section(
+            out(name),
+            {
+                "id": f"{prefix}_{name}",
+                "section_name": f"smRNA read length distribution by 5' base{ds_label}",
+                "description": (
+                    "Reads by length for each starting base, as a percentage of that "
+                    "base's own reads"
+                    f"{' that aligned to a miRBase hairpin' if ds == 'mir' else ''}. "
+                    "Use the buttons to switch base. Normalised within the base, so "
+                    "this shows shape rather than abundance."),
+                "plot_type": "linegraph",
+                "pconfig": {
+                    "id": f"{prefix}_{name}_plot",
+                    "title": f"smRNA: read length by 5' base{ds_label}",
+                    "xlab": f"Read length (nt), {LEN_MAX} = {LEN_MAX} or more",
+                    "ymin": 0,
                 },
-                {s: {l: pct(by_length(ds, s, base).get(l, 0), block_total(ds, s, base))
-                     for l in length_axis}
-                 for s in samples},
-            )
+            },
+            [{"name": label, "ylab": f"% of {label}-start reads"} for _, label in bases],
+            [{s: {l: pct(by_length(ds, s, base).get(l, 0), block_total(ds, s, base))
+                  for l in length_axis}
+              for s in samples}
+             for base, _ in bases],
+        )
 
     write_section(
         out("first_base"),
