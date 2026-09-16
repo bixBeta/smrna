@@ -311,8 +311,11 @@ def main():
         ]
     headers += [
         (f"{prefix}_total_reads", {
-            "title": "smRNA reads",
-            "description": "Total collapsed reads assigned to this library",
+            "title": "m18",
+            "description": "Collapsed reads assigned to this library in the miRDeep2 "
+                           "table. Named m18 by convention, but the floor is whatever "
+                           "reached mapper.pl: pass -l 18 to enforce 18 nt, otherwise it "
+                           "is fastp's --length_required and m18 will track m10",
             "scale": "Blues",
             "shared_key": "read_count",
         }),
