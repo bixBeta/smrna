@@ -25,6 +25,10 @@ process SMRNA_MQC_TABLES {
     def mirbase_arg = mirbase ? "--mirbase" : ""
 
     """
+        # Start from an empty directory: the output glob is mqc/*_mqc.yaml, so a
+        # reused task dir would otherwise republish sections this run no longer
+        # generates.
+        rm -rf mqc
         mkdir -p mqc
 
         python3 ${reshape_script} ${table} \\
@@ -65,6 +69,9 @@ process MULTIQC {
     // is no longer generated can reappear from a stale file.
     """
         export MQC_GENOME=${mqcgenome}
+
+        echo "custom_content staged into MultiQC:"
+        ls -l custom_content
 
         multiqc -f \\
             -c ${mqc_config} \\
