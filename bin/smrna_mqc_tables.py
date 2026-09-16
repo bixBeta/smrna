@@ -274,6 +274,42 @@ def main():
             ("The same distribution restricted to reads that aligned to a miRBase "
              "hairpin, as a percentage of each library's mapped reads."))
 
+    # The sheet's four per-base blocks, for each dataset. Each is divided by that
+    # base's own total, not the library total, so the plot shows the shape of the
+    # distribution for reads starting with that base. How common the base is comes
+    # from the 5' nucleotide bias section instead.
+    for ds, ds_label, ds_suffix in (("all", "", "base"),
+                                    ("mir", ", miRBase-mapped reads", "mirmapped_base")):
+        if ds == "mir" and not args.mirbase:
+            continue
+        for base in ("T", "A", "C", "G"):
+            label = "U" if base == "T" else base
+            write_section(
+                out(f"{ds_suffix}_{label}"),
+                {
+                    "id": f"{prefix}_{ds_suffix}_{label}",
+                    "section_name": f"smRNA read length distribution, {label} start{ds_label}",
+                    "description": (
+                        f"Reads beginning with {label}, by length, as a percentage of "
+                        f"that library's {label}-start reads"
+                        f"{' that aligned to a miRBase hairpin' if ds == 'mir' else ''}. "
+                        "Normalised within the base, so this shows shape rather than "
+                        "abundance - see the 5' nucleotide bias section for how common "
+                        f"{label} is."),
+                    "plot_type": "linegraph",
+                    "pconfig": {
+                        "id": f"{prefix}_{ds_suffix}_{label}_plot",
+                        "title": f"smRNA: {label} start, read length distribution{ds_label}",
+                        "xlab": f"Read length (nt), {LEN_MAX} = {LEN_MAX} or more",
+                        "ylab": f"% of {label}-start reads",
+                        "ymin": 0,
+                    },
+                },
+                {s: {l: pct(by_length(ds, s, base).get(l, 0), block_total(ds, s, base))
+                     for l in length_axis}
+                 for s in samples},
+            )
+
     write_section(
         out("first_base"),
         {
@@ -293,6 +329,26 @@ def main():
         {s: {b: pct(reads_by_base[s].get(b, 0), total_reads[s]) for b in BASES}
          for s in samples},
     )
+
+    if args.mirbase:
+        write_section(
+            out("mirmapped_first_base"),
+            {
+                "id": f"{prefix}_mirmapped_first_base",
+                "section_name": "smRNA 5' nucleotide bias, miRBase-mapped reads",
+                "description": ("First base of each read that aligned to a miRBase "
+                                "hairpin, weighted by read count."),
+                "plot_type": "bargraph",
+                "pconfig": {
+                    "id": f"{prefix}_mirmapped_first_base_plot",
+                    "title": "smRNA: 5' nucleotide bias, miRBase-mapped reads",
+                    "ylab": "% of mapped reads",
+                    "cpswitch": False,
+                },
+            },
+            {s: {b: pct(block_total("mir", s, b), block_total("mir", s)) for b in BASES}
+             for s in samples},
+        )
 
     if args.mirbase:
         write_section(
