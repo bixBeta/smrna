@@ -245,6 +245,10 @@ def main():
                 out[l] += v
         return out
 
+    def window(ds, sample, lo, hi, base=None):
+        """Reads in a length window, the sheet's SUM over a span of block columns."""
+        return sum(v for l, v in by_length(ds, sample, base).items() if lo <= l <= hi)
+
     total_reads = {s: block_total("all", s) for s in samples_seen}
     total_matched = {s: block_total("mir", s) for s in samples_seen}
     mirna_range_reads = {
@@ -459,6 +463,37 @@ def main():
             "scale": "RdYlGn",
         }),
     ]
+    # The sheet's four window counts (its AE:AH). Labelled by the lengths they
+    # actually sum: the sheet's "T-20-22" header adds up 21-23.
+    headers += [
+        (f"{prefix}_u_21_23", {
+            "title": "U 21-23",
+            "description": "Reads starting with U at 21-23 nt, the mature-miRNA window",
+            "scale": "Greens",
+            "shared_key": "read_count",
+        }),
+        (f"{prefix}_all_26_29", {
+            "title": "All 26-29",
+            "description": "Reads of any starting base at 26-29 nt",
+            "scale": "Oranges",
+            "shared_key": "read_count",
+        }),
+        (f"{prefix}_u_26_29", {
+            "title": "U 26-29",
+            "description": "Reads starting with U at 26-29 nt",
+            "scale": "Oranges",
+            "shared_key": "read_count",
+        }),
+    ]
+    if args.mirbase:
+        headers.append((f"{prefix}_u_21_23_mir", {
+            "title": "U 21-23 mapped",
+            "description": "Reads starting with U at 21-23 nt that aligned to a "
+                           "miRBase hairpin",
+            "scale": "Greens",
+            "shared_key": "read_count",
+        }))
+
     if args.mirbase:
         headers.append((f"{prefix}_pct_mirbase", {
             "title": "% miRBase",
@@ -477,7 +512,11 @@ def main():
             f"{prefix}_pct_mirna_len": pct(mirna_range_reads[s], total_reads[s]),
             f"{prefix}_pct_5p_u": pct(reads_by_base[s].get("T", 0), total_reads[s]),
         }
+        row[f"{prefix}_u_21_23"] = window("all", s, 21, 23, "T")
+        row[f"{prefix}_all_26_29"] = window("all", s, 26, 29)
+        row[f"{prefix}_u_26_29"] = window("all", s, 26, 29, "T")
         if args.mirbase:
+            row[f"{prefix}_u_21_23_mir"] = window("mir", s, 21, 23, "T")
             row[f"{prefix}_pct_mirbase"] = pct(total_matched[s], total_reads[s])
         if s in fastp:
             raw, m10 = fastp[s]

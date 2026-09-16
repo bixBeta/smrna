@@ -148,6 +148,18 @@ jobs:
             fi
           done
 
+      - name: General Statistics carries the window counts
+        run: |
+          set -euo pipefail
+          stats=multiqc/custom_content/smrna_stats_mqc.yaml
+          for col in smrna_raw smrna_m10 smrna_total_reads smrna_distinct \
+                     smrna_u_21_23 smrna_all_26_29 smrna_u_26_29 smrna_u_21_23_mir \
+                     smrna_pct_mirna_len smrna_pct_5p_u smrna_pct_mirbase; do
+            if ! grep -q "$col:" "$stats"; then
+              echo "FAIL: $stats is missing the $col column"; exit 1
+            fi
+          done
+
       - name: Report holds the expected sections, in order
         run: |
           set -euo pipefail
