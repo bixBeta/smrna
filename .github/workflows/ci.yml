@@ -157,7 +157,7 @@ jobs:
           if grep -q 'smrna_length_distinct' "$report"; then
             echo "FAIL: removed section is present in the report"; exit 1
           fi
-          grep -o 'id="smrna_[a-z_]*"' "$report" | grep -v '_plot"' | uniq > /tmp/order.txt
+          grep -o 'id="smrna_[A-Za-z_]*"' "$report" | grep -v '_plot"' | uniq > /tmp/order.txt
           cat /tmp/order.txt
           printf '%s\n' 'id="smrna_length_reads"' 'id="smrna_base_U"' 'id="smrna_base_A"' 'id="smrna_base_C"' 'id="smrna_base_G"' 'id="smrna_mirmapped_length_reads"' 'id="smrna_mirmapped_base_U"' 'id="smrna_mirmapped_base_A"' 'id="smrna_mirmapped_base_C"' 'id="smrna_mirmapped_base_G"' 'id="smrna_mirbase_by_length"' 'id="smrna_first_base"' 'id="smrna_mirmapped_first_base"' > /tmp/expected.txt
           diff -u /tmp/expected.txt /tmp/order.txt
