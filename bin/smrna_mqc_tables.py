@@ -27,6 +27,12 @@ BASES = ["A", "C", "G", "T", "N"]
 # metric only; the full distribution is always plotted.
 MIRNA_MIN, MIRNA_MAX = 21, 23
 
+# The spreadsheet's axis. Lengths above LEN_MAX are folded into the LEN_MAX bin
+# by the helper key (=A&"::"&IF(B>50,50,B)), so the last point is "50 or more".
+# Reads below LEN_MIN fall outside the axis entirely and are counted separately,
+# mirroring the sheet's checksum column.
+LEN_MIN, LEN_MAX = 18, 50
+
 
 def parse_args():
     p = argparse.ArgumentParser(description=__doc__,
@@ -163,65 +169,110 @@ def main():
     sample_map = read_sample_map(args.sample_sheet)
     fastp = read_fastp(args.fastp_dir) if args.fastp_dir else {}
 
-    reads_by_len = defaultdict(lambda: defaultdict(int))
-    reads_by_base = defaultdict(lambda: defaultdict(int))
-    matched_by_len = defaultdict(lambda: defaultdict(int))
+    # Aggregated the way the sheet does: one pass building capped-length keys,
+    # split into the "all reads" and "mirmapped" datasets. reads[ds][sample][base]
+    # [capped length] is the equivalent of SUMIF over lib::firstbase::readlen.
+    def counter():
+        return defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
 
-    total_reads = defaultdict(int)
+    reads = {"all": counter(), "mir": counter()}
+    below_axis = {"all": defaultdict(int), "mir": defaultdict(int)}
+
     total_distinct = defaultdict(int)
-    total_matched = defaultdict(int)
-    mirna_range_reads = defaultdict(int)
-
-    lengths = set()
+    samples_seen = set()
     any_match = False
 
-    for library, length, base, match, distinct, reads in read_table(args.table):
+    for library, length, base, match, distinct, reads_n in read_table(args.table):
         sample = sample_map.get(library, library)
-        lengths.add(length)
-
-        reads_by_len[sample][length] += reads
-        reads_by_base[sample][base if base in BASES else "N"] += reads
-
-        total_reads[sample] += reads
+        samples_seen.add(sample)
         total_distinct[sample] += distinct
-        if MIRNA_MIN <= length <= MIRNA_MAX:
-            mirna_range_reads[sample] += reads
+        if base not in BASES:
+            base = "N"
 
+        datasets = ["all"] + (["mir"] if match else [])
         if match:
             any_match = True
-            matched_by_len[sample][length] += reads
-            total_matched[sample] += reads
+
+        for ds in datasets:
+            if length < LEN_MIN:
+                below_axis[ds][sample] += reads_n
+            else:
+                reads[ds][sample][base][min(length, LEN_MAX)] += reads_n
+
+    # Block totals: all bases, and per base, over the 18..50 axis only - the same
+    # denominators the sheet divides by.
+    def block_total(ds, sample, base=None):
+        bases = [base] if base else BASES
+        return sum(v for b in bases for v in reads[ds][sample][b].values())
+
+    def by_length(ds, sample, base=None):
+        bases = [base] if base else BASES
+        out = defaultdict(int)
+        for b in bases:
+            for l, v in reads[ds][sample][b].items():
+                out[l] += v
+        return out
+
+    total_reads = {s: block_total("all", s) for s in samples_seen}
+    total_matched = {s: block_total("mir", s) for s in samples_seen}
+    mirna_range_reads = {
+        s: sum(v for l, v in by_length("all", s).items() if MIRNA_MIN <= l <= MIRNA_MAX)
+        for s in samples_seen
+    }
+    reads_by_base = {s: {b: block_total("all", s, b) for b in BASES} for s in samples_seen}
+    reads_by_len = {s: by_length("all", s) for s in samples_seen}
+    matched_by_len = {s: by_length("mir", s) for s in samples_seen}
+    lengths = {l for s in samples_seen for l in reads_by_len[s]} or {LEN_MIN}
 
     if not total_reads:
         sys.exit(f"error: no usable rows parsed from {args.table}")
 
     samples = sorted(total_reads)
-    # Zero-fill the length axis so lines are continuous rather than gappy.
-    length_axis = list(range(min(lengths), max(lengths) + 1))
+    # Fixed 18..50 axis, as in the sheet. Zero-filled so lines stay continuous.
+    length_axis = list(range(LEN_MIN, LEN_MAX + 1))
+
+    def axis_label(length):
+        return f"{LEN_MAX}+" if length == LEN_MAX else length
     os.makedirs(args.outdir, exist_ok=True)
     prefix = args.prefix
 
     def out(name):
         return os.path.join(args.outdir, f"{prefix}_{name}_mqc.yaml")
 
-    write_section(
-        out("length_reads"),
-        {
-            "id": f"{prefix}_length_reads",
-            "section_name": "smRNA read length distribution",
-            "description": ("Total reads per length, after collapsing. Mature miRNAs "
-                            "peak at 21-23 nt; a broad 28-34 nt shoulder usually means "
-                            "degradation products or rRNA/tRNA fragments."),
-            "plot_type": "linegraph",
-            "pconfig": {
-                "id": f"{prefix}_length_reads_plot",
-                "title": "smRNA: read length distribution",
-                "xlab": "Read length (nt)",
-                "ylab": "Reads",
+    def length_percent_section(ds, name, section_name, description):
+        write_section(
+            out(name),
+            {
+                "id": f"{prefix}_{name}",
+                "section_name": section_name,
+                "description": description,
+                "plot_type": "linegraph",
+                "pconfig": {
+                    "id": f"{prefix}_{name}_plot",
+                    "title": f"smRNA: {section_name}",
+                    "xlab": f"Read length (nt), {LEN_MAX} = {LEN_MAX} or more",
+                    "ylab": "% of reads",
+                    "ymin": 0,
+                },
             },
-        },
-        {s: {l: reads_by_len[s].get(l, 0) for l in length_axis} for s in samples},
-    )
+            {s: {l: pct(by_length(ds, s).get(l, 0), block_total(ds, s))
+                 for l in length_axis}
+             for s in samples},
+        )
+
+    length_percent_section(
+        "all", "length_reads", "smRNA read length distribution",
+        ("Reads per length as a percentage of the library, counting only "
+         f"{LEN_MIN}-{LEN_MAX} nt. The {LEN_MAX} nt point is every read of that "
+         "length or longer, so it is an open-ended bucket rather than a single "
+         "length. Mature miRNAs peak at 21-23 nt."))
+
+    if args.mirbase:
+        length_percent_section(
+            "mir", "mirmapped_length_reads",
+            "smRNA read length distribution, miRBase-mapped reads",
+            ("The same distribution restricted to reads that aligned to a miRBase "
+             "hairpin, as a percentage of each library's mapped reads."))
 
     write_section(
         out("first_base"),

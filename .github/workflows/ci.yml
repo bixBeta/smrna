@@ -137,10 +137,10 @@ jobs:
             echo "FAIL: the removed distinct-sequences section was written"; exit 1
           fi
           got=$(ls multiqc/custom_content/*.yaml | wc -l)
-          if [ "$got" -ne 4 ]; then
-            echo "FAIL: expected 4 section files, got $got"; exit 1
+          if [ "$got" -ne 5 ]; then
+            echo "FAIL: expected 5 section files, got $got"; exit 1
           fi
-          for f in smrna_length_reads smrna_mirbase_by_length smrna_first_base smrna_stats; do
+          for f in smrna_length_reads smrna_mirmapped_length_reads smrna_mirbase_by_length smrna_first_base smrna_stats; do
             if [ ! -e "multiqc/custom_content/${f}_mqc.yaml" ]; then
               echo "FAIL: missing ${f}_mqc.yaml"; exit 1
             fi
@@ -156,5 +156,5 @@ jobs:
           fi
           grep -o 'id="smrna_[a-z_]*"' "$report" | grep -v '_plot"' | uniq > /tmp/order.txt
           cat /tmp/order.txt
-          printf '%s\n' 'id="smrna_length_reads"' 'id="smrna_mirbase_by_length"' 'id="smrna_first_base"' > /tmp/expected.txt
+          printf '%s\n' 'id="smrna_length_reads"' 'id="smrna_mirmapped_length_reads"' 'id="smrna_mirbase_by_length"' 'id="smrna_first_base"' > /tmp/expected.txt
           diff -u /tmp/expected.txt /tmp/order.txt

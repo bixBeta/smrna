@@ -44,6 +44,8 @@ remove_sections:
 report_section_order:
   smrna_length_reads:
     order: -100
+  smrna_mirmapped_length_reads:
+    order: -150
   smrna_mirbase_by_length:
     order: -200
   smrna_first_base:
