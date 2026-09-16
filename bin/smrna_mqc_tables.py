@@ -69,9 +69,12 @@ def read_fastp(dirname):
     for path in sorted(glob.glob(os.path.join(dirname or "", "*.fastp.json"))):
         sample = os.path.basename(path)[: -len(".fastp.json")]
         try:
-            summary = json.load(open(path))["summary"]
-            out[sample] = (summary["before_filtering"]["total_reads"],
-                           summary["after_filtering"]["total_reads"])
+            doc = json.load(open(path))
+            # passed_filter_reads, not summary.after_filtering.total_reads: this is
+            # the field MultiQC's fastp module shows as Reads After Filtering, so
+            # m10 matches that column by construction rather than by coincidence.
+            out[sample] = (doc["summary"]["before_filtering"]["total_reads"],
+                           doc["filtering_result"]["passed_filter_reads"])
         except (ValueError, KeyError) as exc:
             sys.stderr.write(f"{path}: skipping, could not read summary ({exc})\n")
     return out
@@ -300,7 +303,8 @@ def main():
             (f"{prefix}_m10", {
                 "title": "m10",
                 "description": "Reads surviving fastp trimming "
-                               "(after_filtering.total_reads); matches Reads After Filtering",
+                               "(filtering_result.passed_filter_reads); the same field "
+                               "MultiQC's fastp module shows as Reads After Filtering",
                 "scale": "Blues",
                 "shared_key": "read_count",
             }),

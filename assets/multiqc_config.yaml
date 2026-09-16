@@ -58,13 +58,6 @@ table_columns_visible:
     pct_duplication: False
     after_filtering_gc_content: False
 
-# Collapsed reads are counted once per unique sequence, so fastp's own read
-# counts and the smRNA totals are not directly comparable - keep them distinct.
-custom_table_header_config:
-  general_stats_table:
-    smrna_total_reads:
-      format: "{:,.0f}"
-
 # fastp records the input fastq name in its JSON, so MultiQC would otherwise
 # call the sample SS1_R1 while the smRNA panels call it SS1 - giving two
 # half-empty rows per sample in General Statistics. The pipeline writes
