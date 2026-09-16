@@ -57,6 +57,9 @@ table_columns_visible:
   fastp:
     pct_duplication: False
     after_filtering_gc_content: False
+    # Same field as the m10 column, which keeps raw -> m10 -> smRNA reads
+    # together in one namespace. Set True and drop m10 to swap them back.
+    filtering_result_passed_filter_reads: False
 
 # fastp records the input fastq name in its JSON, so MultiQC would otherwise
 # call the sample SS1_R1 while the smRNA panels call it SS1 - giving two
