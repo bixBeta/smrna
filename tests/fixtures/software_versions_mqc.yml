@@ -1,0 +1,4 @@
+id: pipeline_software_versions
+section_name: Software Versions
+plot_type: html
+data: "<table><tr><td>miRDeep2</td><td>2.0.1.3</td></tr></table>"
