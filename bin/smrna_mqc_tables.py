@@ -164,7 +164,6 @@ def main():
     fastp = read_fastp(args.fastp_dir) if args.fastp_dir else {}
 
     reads_by_len = defaultdict(lambda: defaultdict(int))
-    distinct_by_len = defaultdict(lambda: defaultdict(int))
     reads_by_base = defaultdict(lambda: defaultdict(int))
     matched_by_len = defaultdict(lambda: defaultdict(int))
 
@@ -181,7 +180,6 @@ def main():
         lengths.add(length)
 
         reads_by_len[sample][length] += reads
-        distinct_by_len[sample][length] += distinct
         reads_by_base[sample][base if base in BASES else "N"] += reads
 
         total_reads[sample] += reads
@@ -223,25 +221,6 @@ def main():
             },
         },
         {s: {l: reads_by_len[s].get(l, 0) for l in length_axis} for s in samples},
-    )
-
-    write_section(
-        out("length_distinct"),
-        {
-            "id": f"{prefix}_length_distinct",
-            "section_name": "smRNA distinct sequences by length",
-            "description": ("Unique collapsed sequences per length. Compare against the "
-                            "read-count distribution: a sharp read peak over a flat "
-                            "distinct-sequence curve means a few sequences dominate."),
-            "plot_type": "linegraph",
-            "pconfig": {
-                "id": f"{prefix}_length_distinct_plot",
-                "title": "smRNA: distinct sequences by length",
-                "xlab": "Read length (nt)",
-                "ylab": "Distinct sequences",
-            },
-        },
-        {s: {l: distinct_by_len[s].get(l, 0) for l in length_axis} for s in samples},
     )
 
     write_section(
