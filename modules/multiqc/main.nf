@@ -3,7 +3,10 @@ process SMRNA_MQC_TABLES {
     tag "$pin"
     label 'process_mqc'
 
-    publishDir "multiqc/custom_content", mode: "copy", overwrite: true
+    // saveAs strips the mqc/ level, so published files sit directly in
+    // multiqc/custom_content/ and match what MultiQC is actually handed.
+    publishDir "multiqc/custom_content", mode: "copy", overwrite: true,
+               saveAs: { it.substring(it.lastIndexOf('/') + 1) }
 
 
     input:
