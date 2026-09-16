@@ -59,6 +59,9 @@ process MULTIQC {
 
     script:
 
+    // Search the staged inputs by name rather than ".". Scanning the whole work
+    // directory also picks up anything else that lands in it, so a section that
+    // is no longer generated can reappear from a stale file.
     """
         export MQC_GENOME=${mqcgenome}
 
@@ -66,6 +69,6 @@ process MULTIQC {
             -c ${mqc_config} \\
             --cl-config "custom_logo: ${logo}" \\
             -n ${pin}_multiqc_report.html \\
-            .
+            fastp custom_content ${mqc_versions}
     """
 }
