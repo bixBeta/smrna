@@ -74,6 +74,12 @@ ch_mqc_logo = channel.value(file("$projectDir/img/trex-extended-logo.png"))
 // Shown in the MultiQC report header; NA when the run had no --genome.
 ch_mqc_genome = channel.value(params.genome ?: 'NA')
 
+// Staged as a real input rather than relied on via bin/ on PATH: Nextflow does
+// not hash the bin directory, so editing the script would otherwise leave a
+// cached SMRNA_MQC_TABLES task looking valid and -resume would reuse its old
+// sections.
+ch_mqc_script = channel.value(file("$projectDir/bin/smrna_mqc_tables.py"))
+
 // Import Modules:
 
 include { FASTP              } from './modules/fastp'
@@ -164,7 +170,8 @@ workflow {
     DUMP_VERSIONS(ch_versions.collect())
 
     SMRNA_MQC_TABLES(ch_pin, ch_awk_table, ch_sheet_f,
-                     ch_fastp_json.collect().ifEmpty([]), params.genome != null)
+                     ch_fastp_json.collect().ifEmpty([]), ch_mqc_script,
+                     params.genome != null)
 
     MULTIQC(
         ch_pin,

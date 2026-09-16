@@ -11,6 +11,7 @@ process SMRNA_MQC_TABLES {
         path(table)
         path(sheet)
         path('fastp/*')
+        path(reshape_script)
         val(mirbase)
 
     output:
@@ -26,7 +27,7 @@ process SMRNA_MQC_TABLES {
     """
         mkdir -p mqc
 
-        smrna_mqc_tables.py ${table} \\
+        python3 ${reshape_script} ${table} \\
             --sample-sheet ${sheet} \\
             --outdir mqc \\
             --fastp-dir fastp \\
