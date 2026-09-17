@@ -50,9 +50,9 @@ remove_sections:
 report_section_order:
   smrna_length_reads:
     order: -100
-  smrna_base_length:
-    order: -110
   smrna_mirmapped_length_reads:
+    order: -110
+  smrna_base_length:
     order: -120
   smrna_mirmapped_base_length:
     order: -130
