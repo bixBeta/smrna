@@ -10,10 +10,12 @@ process SMRNA_MQC_TABLES {
         val(pin)
         path(table)
         path(sheet)
+        path('fastp/*')
+        path(reshape_script)
         val(mirbase)
 
     output:
-        path("mqc/*_mqc.yaml")      , emit: mqc_files
+        path("*_mqc.yaml")          , emit: mqc_files
 
 
     script:
@@ -23,11 +25,16 @@ process SMRNA_MQC_TABLES {
     def mirbase_arg = mirbase ? "--mirbase" : ""
 
     """
-        mkdir -p mqc
+        # Written into the task directory root, not a subdirectory: an output
+        # glob with a directory component makes publishDir recreate that level,
+        # which produced multiqc/custom_content/mqc/. Clear first so a reused
+        # task directory cannot republish a section this run no longer writes.
+        rm -f *_mqc.yaml
 
-        smrna_mqc_tables.py ${table} \\
+        python3 ${reshape_script} ${table} \\
             --sample-sheet ${sheet} \\
-            --outdir mqc \\
+            --outdir . \\
+            --fastp-dir fastp \\
             --prefix smrna ${mirbase_arg}
     """
 }
@@ -57,13 +64,19 @@ process MULTIQC {
 
     script:
 
+    // Search the staged inputs by name rather than ".". Scanning the whole work
+    // directory also picks up anything else that lands in it, so a section that
+    // is no longer generated can reappear from a stale file.
     """
         export MQC_GENOME=${mqcgenome}
+
+        echo "custom_content staged into MultiQC:"
+        ls -l custom_content
 
         multiqc -f \\
             -c ${mqc_config} \\
             --cl-config "custom_logo: ${logo}" \\
             -n ${pin}_multiqc_report.html \\
-            .
+            fastp custom_content ${mqc_versions}
     """
 }

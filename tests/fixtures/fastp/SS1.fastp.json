@@ -1,0 +1,1 @@
+{"summary": {"before_filtering": {"total_reads": 24609228}, "after_filtering": {"total_reads": 24387744}}, "filtering_result": {"passed_filter_reads": 24387744}, "command": "fastp -i SS_R1.fastq.gz"}

@@ -41,15 +41,23 @@ remove_sections:
   - fastp-seq-content-n
 
 # Sections sort by descending order, so more negative sinks further down.
+# Length distributions for all reads and mapped reads, then the two
+# switchable per-base sections, then the mappable fraction and base bias.
 report_section_order:
   smrna_length_reads:
     order: -100
-  smrna_length_distinct:
-    order: -200
-  smrna_first_base:
-    order: -300
+  smrna_mirmapped_length_reads:
+    order: -110
+  smrna_base_length:
+    order: -120
+  smrna_mirmapped_base_length:
+    order: -130
   smrna_mirbase_by_length:
-    order: -400
+    order: -140
+  smrna_first_base:
+    order: -150
+  smrna_mirmapped_first_base:
+    order: -160
   pipeline_software_versions:
     order: -1000
 
@@ -57,13 +65,9 @@ table_columns_visible:
   fastp:
     pct_duplication: False
     after_filtering_gc_content: False
-
-# Collapsed reads are counted once per unique sequence, so fastp's own read
-# counts and the smRNA totals are not directly comparable - keep them distinct.
-custom_table_header_config:
-  general_stats_table:
-    smrna_total_reads:
-      format: "{:,.0f}"
+    # Same field as the m10 column, which keeps raw -> m10 -> smRNA reads
+    # together in one namespace. Set True and drop m10 to swap them back.
+    filtering_result_passed_filter_reads: False
 
 # fastp records the input fastq name in its JSON, so MultiQC would otherwise
 # call the sample SS1_R1 while the smRNA panels call it SS1 - giving two

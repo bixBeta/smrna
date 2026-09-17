@@ -9,6 +9,7 @@ on:
       - 'bin/**'
       - 'assets/**'
       - 'README.md'
+      - 'tests/**'
       - '.github/workflows/ci.yml'
   # A path filter on push alone still runs the full job on doc-only PRs, so the
   # same list has to be repeated here. GitHub Actions rejects YAML anchors.
@@ -20,6 +21,7 @@ on:
       - 'bin/**'
       - 'assets/**'
       - 'README.md'
+      - 'tests/**'
       - '.github/workflows/ci.yml'
   workflow_dispatch:
 
@@ -94,3 +96,79 @@ jobs:
               assert 'data' in d and d['data'], f'{f} has no data'
           print(f'ok: {len(files)} sections')
           "
+
+
+  mqc-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Nextflow
+        run: |
+          set -euo pipefail
+          curl -fsSL https://github.com/nextflow-io/nextflow/releases/download/v25.04.1/nextflow-25.04.1-dist -o "$HOME/nextflow"
+          chmod +x "$HOME/nextflow"
+          echo "$HOME" >> "$GITHUB_PATH"
+
+      # Runs SMRNA_MQC_TABLES and MULTIQC for real against fixtures, so the
+      # published layout and the report's sections are checked, not just whether
+      # the DAG resolves.
+      - name: Run the MultiQC processes
+        run: |
+          set -euo pipefail
+          python3 tests/make_fixtures.py
+          nextflow run tests/mqc_smoke.nf -c tests/nextflow.config
+
+      - name: Published layout is flat and holds only current sections
+        run: |
+          set -euo pipefail
+          echo "--- multiqc/custom_content ---"
+          ls -l multiqc/custom_content/
+          if [ -d multiqc/custom_content/mqc ]; then
+            echo "FAIL: publishDir recreated an mqc/ subdirectory"; exit 1
+          fi
+          if [ -e multiqc/custom_content/smrna_length_distinct_mqc.yaml ]; then
+            echo "FAIL: the removed distinct-sequences section was written"; exit 1
+          fi
+          got=$(ls multiqc/custom_content/*.yaml | wc -l)
+          if [ "$got" -ne 8 ]; then
+            echo "FAIL: expected 8 section files, got $got"; exit 1
+          fi
+          for f in smrna_length_reads smrna_base_length smrna_mirmapped_length_reads \
+                   smrna_mirmapped_base_length smrna_mirbase_by_length smrna_first_base \
+                   smrna_mirmapped_first_base smrna_stats; do
+            if [ ! -e "multiqc/custom_content/${f}_mqc.yaml" ]; then
+              echo "FAIL: missing ${f}_mqc.yaml"; exit 1
+            fi
+          done
+
+      - name: General Statistics carries the window counts
+        run: |
+          set -euo pipefail
+          stats=multiqc/custom_content/smrna_stats_mqc.yaml
+          for col in smrna_raw smrna_m10 smrna_total_reads smrna_distinct \
+                     smrna_u_21_23 smrna_all_26_29 smrna_u_26_29 smrna_u_21_23_mir \
+                     smrna_pct_mirna_len smrna_pct_5p_u smrna_pct_mirbase; do
+            if ! grep -q "$col:" "$stats"; then
+              echo "FAIL: $stats is missing the $col column"; exit 1
+            fi
+          done
+
+      - name: Report holds the expected sections, in order
+        run: |
+          set -euo pipefail
+          report=multiqc/CI_multiqc_report.html
+          if [ ! -f "$report" ]; then echo "FAIL: no report at $report"; exit 1; fi
+          if grep -q 'smrna_length_distinct' "$report"; then
+            echo "FAIL: removed section is present in the report"; exit 1
+          fi
+          grep -o 'id="smrna_[A-Za-z_]*"' "$report" | grep -v '_plot' | uniq > /tmp/order.txt
+          cat /tmp/order.txt
+          printf '%s\n' 'id="smrna_length_reads"' 'id="smrna_mirmapped_length_reads"' 'id="smrna_base_length"' 'id="smrna_mirmapped_base_length"' 'id="smrna_mirbase_by_length"' 'id="smrna_first_base"' 'id="smrna_mirmapped_first_base"' > /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/order.txt
