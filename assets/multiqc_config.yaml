@@ -41,12 +41,8 @@ remove_sections:
   - fastp-seq-content-n
 
 # Sections sort by descending order, so more negative sinks further down.
-# Sections sort by descending order, so more negative sinks further down.
-# All-reads blocks first, then the miRBase-mapped set, matching the sheet's
-# two tabs.
-# Sections sort by descending order, so more negative sinks further down.
-# All-reads blocks first, then the miRBase-mapped set, matching the sheet's
-# two tabs. The per-base blocks are one switchable section each.
+# Length distributions for all reads and mapped reads, then the two
+# switchable per-base sections, then the mappable fraction and base bias.
 report_section_order:
   smrna_length_reads:
     order: -100
