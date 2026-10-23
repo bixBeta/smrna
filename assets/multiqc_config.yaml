@@ -61,10 +61,15 @@ report_section_order:
   pipeline_software_versions:
     order: -1000
 
+# Only the eight smRNA columns are shown by default: raw, m10, m18, % 21-23 nt,
+# % 5'-U, U 21-23, U 21-23 mapped and % miRBase. The rest stay in the table and
+# can be switched on with "Configure columns".
 table_columns_visible:
   fastp:
     pct_duplication: False
     after_filtering_gc_content: False
+    pct_surviving: False
+    pct_adapter: False
     # Same field as the m10 column, which keeps raw -> m10 -> smRNA reads
     # together in one namespace. Set True and drop m10 to swap them back.
     filtering_result_passed_filter_reads: False

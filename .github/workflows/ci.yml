@@ -160,6 +160,26 @@ jobs:
             fi
           done
 
+      - name: General Statistics shows only the default columns
+        run: |
+          set -euo pipefail
+          python3 - <<'EOF'
+          import re, sys
+          html = open("multiqc/CI_multiqc_report.html").read()
+          visible = []
+          for m in re.finditer(r'<th id="header_([A-Za-z_0-9-]+)"[^>]*class="([^"]*)"[^>]*>.*?>([^<]+)</span></th>', html, re.S):
+              if "column-hidden" not in m.group(2):
+                  visible.append(m.group(3))
+          expected = ["Raw reads", "m10", "m18", "% 21-23 nt", "% 5'-U",
+                      "U 21-23", "U 21-23 mapped", "% miRBase"]
+          if sorted(visible) != sorted(expected):
+              print("FAIL: visible General Statistics columns changed")
+              print("  expected:", expected)
+              print("  got     :", visible)
+              sys.exit(1)
+          print("ok, visible columns:", visible)
+          EOF
+
       - name: Report holds the expected sections, in order
         run: |
           set -euo pipefail

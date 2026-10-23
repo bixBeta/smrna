@@ -444,6 +444,7 @@ def main():
             "title": "Distinct seqs",
             "description": "Unique collapsed sequences",
             "scale": "Purples",
+            "hidden": True,
             "shared_key": "read_count",
         }),
         (f"{prefix}_pct_mirna_len", {
@@ -476,12 +477,14 @@ def main():
             "title": "All 26-29",
             "description": "Reads of any starting base at 26-29 nt",
             "scale": "Oranges",
+            "hidden": True,
             "shared_key": "read_count",
         }),
         (f"{prefix}_u_26_29", {
             "title": "U 26-29",
             "description": "Reads starting with U at 26-29 nt",
             "scale": "Oranges",
+            "hidden": True,
             "shared_key": "read_count",
         }),
     ]
